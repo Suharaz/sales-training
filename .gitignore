@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.env
+.env.local
+.env*.local
+.vercel
+.DS_Store
+*.log
+tsconfig.tsbuildinfo
+next-env.d.ts
+deploy/*.pid
+deploy/tunnel-url.txt
+
+# Tài liệu nội bộ (spec, mockup gốc) không đưa lên repo công khai — giữ bản local
+tai-lieu/spec.md
+tai-lieu/*.docx
+tai-lieu/TAKI-FUNNEL-OS-72-UI-MOCKUPS/
