@@ -7,10 +7,13 @@ export async function voiWorkspace<T>(workspaceId: string, fn: (q: Truy) => Prom
   if (!laUuid(workspaceId)) throw new LoiWorkspace("workspace_id không hợp lệ");
   const c = await pool().connect();
   let hong = false;
+  // Xếp hàng truy vấn trên cùng một client: Promise.all trong trang gọi song song, pg 9 sẽ bỏ hỗ trợ query chồng.
+  let chuoi: Promise<unknown> = Promise.resolve();
+  const q: Truy = { query: (text, values) => { const p = chuoi.then(() => c.query(text, values)); chuoi = p.then(() => undefined, () => undefined); return p as ReturnType<Truy["query"]>; } };
   try {
     await c.query("begin");
     await c.query("select set_config('app.workspace_id', $1, true)", [workspaceId]);
-    const kq = await fn(c);
+    const kq = await fn(q);
     await c.query("commit");
     return kq;
   } catch (e) {

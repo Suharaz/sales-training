@@ -11,8 +11,12 @@ export function chuoiKetNoi(): string {
 export function chuoiKetNoiApp(): string {
   return process.env.DATABASE_URL_APP || chuoiKetNoi();
 }
-function moPool(url: string, max: number): Pool {
-  return new Pool({ connectionString: url, max, idleTimeoutMillis: 60_000, keepAlive: true, connectionTimeoutMillis: 10_000, ssl: /neon\.tech|sslmode=require/.test(url) ? { rejectUnauthorized: false } : undefined });
+function moPool(urlGoc: string, max: number): Pool {
+  // Neon/Vercel đưa `sslmode=require&channel_binding=require` trong URL → pg in cảnh báo SSL ra stderr mỗi lần khởi động
+  // (Vercel hiển thị thành «error»). Bỏ tham số đó và cấu hình SSL tường minh.
+  let url = urlGoc; let canSsl = /neon\.tech|sslmode=require/.test(urlGoc);
+  try { const u = new URL(urlGoc); if (u.searchParams.has("sslmode")) { canSsl = true; u.searchParams.delete("sslmode"); } u.searchParams.delete("channel_binding"); url = u.toString(); } catch { /* giữ nguyên */ }
+  return new Pool({ connectionString: url, max, idleTimeoutMillis: 60_000, keepAlive: true, connectionTimeoutMillis: 10_000, ssl: canSsl ? { rejectUnauthorized: true } : undefined });
 }
 /** Pool ứng dụng — mọi truy vấn nghiệp vụ (qua workspace-guard). */
 export function pool(): Pool { return (g.__stPool ??= moPool(chuoiKetNoiApp(), 8)); }

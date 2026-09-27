@@ -4,7 +4,9 @@ import type { Truy } from "@/db/ket-noi";
 import { ghiKiemToan } from "./nhat-ky";
 export type CaiDatWs = { id: string; ten: string; slug: string; mui_gio: string; nguong_rot_hoc_ngay: number };
 export async function layWorkspace(q: Truy, id: string): Promise<CaiDatWs> {
-  return (await q.query<CaiDatWs>("select id, ten, slug, mui_gio, nguong_rot_hoc_ngay from workspace where id = $1", [id])).rows[0];
+  const r = (await q.query<CaiDatWs>("select id, ten, slug, mui_gio, nguong_rot_hoc_ngay from workspace where id = $1", [id])).rows[0];
+  if (!r) throw new Error("Workspace không tồn tại hoặc phiên không hợp lệ");
+  return r;
 }
 const MUI_GIO_HOP_LE = ["Asia/Ho_Chi_Minh", "Asia/Bangkok", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney", "Europe/London", "America/New_York", "America/Los_Angeles"];
 export async function capNhatWorkspace(q: Truy, o: { workspaceId: string; nguoiDungId: string; ten: string; muiGio: string; nguongRotHoc: number }) {
