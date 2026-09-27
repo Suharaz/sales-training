@@ -9,7 +9,7 @@ import { danhSachGiongViet, docVanBan, docTuDong, dungDoc, giongDaChon, luuGiong
 
 type KichBan = { ten: string; mo_dau: string; khai_thac: string; gia_tri: string; chot: string };
 type PD = { loai: string; ten: string; noi_dung: string; cau_tra_loi_chuan: string };
-export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBan, khoPhanDoi }: { phienId: string; persona: Persona; lichSuBanDau: LuotHoiThoai[]; cuaToi: boolean; kichBan: KichBan | null; khoPhanDoi: PD[] }) {
+export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBan, khoPhanDoi, goiDien }: { phienId: string; persona: Persona; lichSuBanDau: LuotHoiThoai[]; cuaToi: boolean; kichBan: KichBan | null; khoPhanDoi: PD[]; goiDien?: boolean }) {
   const router = useRouter();
   const [lichSu, setLichSu] = useState<LuotHoiThoai[]>(lichSuBanDau);
   const [tin, setTin] = useState("");
@@ -74,6 +74,18 @@ export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBa
     finally { setDangGui(false); }
   }
   useEffect(() => () => { boNghe.current?.dung(); dungDoc(); }, []);
+  const [choNhacMay, setChoNhacMay] = useState(!!goiDien && lichSuBanDau.length === 0);
+  const [dangNhac, setDangNhac] = useState(false);
+  async function nhacMay() {
+    setDangNhac(true); setLoi("");
+    try {
+      await batCheDoGoi();
+      const r = await fetch(`/api/luyen-tap/${phienId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hanh_dong: "mo_loi" }) });
+      const j = (await r.json()) as { khach?: LuotKhach; lichSu?: LuotHoiThoai[]; loi?: string };
+      if (!r.ok || !j.khach) throw new Error(j.loi || "Không kết nối được");
+      setLichSu(j.lichSu!); setChoNhacMay(false); docKhach(j.khach.noi_dung);
+    } catch (e) { setLoi((e as Error).message); setChoNhacMay(false); } finally { setDangNhac(false); }
+  }
   function batNghe() {
     const w = window as unknown as { SpeechRecognition?: new () => { lang: string; interimResults: boolean; continuous: boolean; start(): void; stop(): void; onresult: ((e: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null }; webkitSpeechRecognition?: never };
     const C = w.SpeechRecognition || (w as { webkitSpeechRecognition?: typeof w.SpeechRecognition }).webkitSpeechRecognition; if (!C) return;
@@ -122,6 +134,14 @@ export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBa
     router.push("/luyen-tap"); router.refresh();
   }
   const mm = String(Math.floor(giay / 60)).padStart(2, "0"), ss = String(giay % 60).padStart(2, "0");
+  if (choNhacMay) return (
+    <div className="the p-10 flex flex-col items-center gap-4 text-center" style={{ minHeight: 480, justifyContent: "center" }}>
+      <div className="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl" style={{ background: "var(--gradient-cta)", boxShadow: "0 0 0 12px var(--nhan-mo)" }}>{dangNhac ? <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="xoay"><path d="M12 3a9 9 0 1 0 9 9" strokeLinecap="round" /></svg> : "📞"}</div>
+      <div className="text-2xl font-bold">{dangNhac ? "Đang kết nối…" : `Đang gọi ${persona.ten}`}</div>
+      <div className="mo-ta max-w-md">{persona.chuc_danh} · {persona.cong_ty}. {dangNhac ? "Xin quyền micro, khách sắp nhấc máy." : "Đeo tai nghe, cho phép dùng micro rồi bấm Nhấc máy. Khách sẽ nói trước, bạn mở lời ngay sau đó."}</div>
+      {loi && <div className="thong-bao thong-bao-do">{loi}</div>}
+      <div className="flex gap-2"><button type="button" className="nut nut-chinh text-base px-6 py-3" onClick={nhacMay} disabled={dangNhac}>📞 Nhấc máy</button><button type="button" className="nut" onClick={() => setChoNhacMay(false)} disabled={dangNhac}>Gõ chữ thay vì nói</button></div>
+    </div>);
   return (
     <div className="grid gap-4 lg:grid-cols-[280px_1fr_300px]">
       <aside className="the p-4 flex flex-col gap-3 text-sm order-2 lg:order-1">

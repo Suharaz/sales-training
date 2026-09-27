@@ -5,9 +5,10 @@ import { Icon } from "./Icon";
 import { NutTheme, NutDangXuat } from "./NutHeader";
 import { TEN_VAI_TRO } from "@/core/phan-quyen";
 
-export type MucMenu = { href: string; ten: string; icon: string; chiQuanLy?: boolean };
+export type MucMenu = { href: string; ten: string; icon: string; chiQuanLy?: boolean; noiBat?: boolean };
 export const MENU: MucMenu[] = [
   { href: "/", ten: "Tổng quan", icon: "tong_quan" },
+  { href: "/goi-dien", ten: "Gọi điện với AI", icon: "cuoc_goi", noiBat: true },
   { href: "/luyen-tap", ten: "Luyện tập role-play", icon: "luyen_tap" },
   { href: "/cuoc-goi", ten: "Phân tích cuộc gọi", icon: "cuoc_goi" },
   { href: "/huan-luyen", ten: "Huấn luyện AI", icon: "huan_luyen" },
@@ -34,7 +35,7 @@ export function KhungShell({ phien, duongDan, tieuDe, moTa, hanhDong, children }
         </div>
         <nav className="p-3 flex flex-col gap-0.5 flex-1">
           {MENU.filter((m) => !m.chiQuanLy || phien.vaiTro === "quan_ly").map((m) => (
-            <Link key={m.href} href={m.href} className={`muc-sidebar ${chon(m.href) ? "dang-chon" : ""}`}><Icon ten={m.icon} size={18} />{m.ten}</Link>
+            <Link key={m.href} href={m.href} className={`muc-sidebar ${chon(m.href) ? "dang-chon" : ""} ${m.noiBat ? "muc-noi-bat" : ""}`}><Icon ten={m.icon} size={18} />{m.ten}{m.noiBat && <span className="nhan ml-auto" style={{ background: "rgba(255,255,255,.22)", color: "#fff" }}>Mới</span>}</Link>
           ))}
         </nav>
         <div className="p-3 border-t text-xs" style={{ borderColor: "var(--vien)", color: "var(--chu-mo)" }}>

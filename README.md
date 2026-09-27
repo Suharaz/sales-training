@@ -35,6 +35,8 @@ Tài liệu gốc là spec TAKI FUNNEL OS v2 (module M15 Sales Engine, M18 LMS) 
 
 | Nhóm | Có gì |
 |---|---|
+| **Khởi động 2 bước** | Quản lý đăng nhập lần đầu được đưa thẳng vào màn nạp DNA (nhập tay hoặc AI trích từ giới thiệu công ty) rồi thêm sản phẩm; có thể bỏ qua và làm sau. Tổng quan có 4 nút lớn: Gọi điện với AI · Role-play · Nạp DNA và Sản phẩm · Tạo kịch bản DISC. |
+| **Gọi điện với AI** | Menu riêng: chọn sản phẩm, nhóm khách DISC, độ khó, bấm «Gọi ngay». AI dựng khách ảo, màn «Nhấc máy» hiện lên, khách nói «Alô» trước bằng giọng ElevenLabs / Azure / trình duyệt; sale nói vào mic, ngừng một giây là khách trả lời, nói chen là khách im. Kết thúc là chấm 6 kỹ năng và độ phù hợp DISC. |
 | **DNA doanh nghiệp** | Hồ sơ doanh nghiệp có phiên bản: mô tả, khách mục tiêu, nỗi đau, USP, xưng hô, phong cách, **từ cấm**, **số liệu được phép**, đối thủ, chính sách. Nhập tay hoặc **dán tài liệu để AI trích**. AI Gateway tự nạp vào mọi tác vụ, đầu ra có từ cấm bị đánh dấu trong nhật ký. |
 | **Sản phẩm** | Hồ sơ đầy đủ theo bậc thang giá trị (tầng 0–4): đối tượng, kết quả kỳ vọng, hình thức, thời lượng, điểm bán hàng, phản đối thường gặp, chính sách, so sánh đối thủ, tài liệu. Dùng chung cho role-play, phân tích, gợi ý và copilot. |
 | **Copilot cuộc gọi thật** | Trình duyệt nghe cuộc gọi (loa ngoài) và chuyển thành lời thoại theo người nói (phím cách để đổi, bấm câu để sửa vai). **Lớp tức thì**: bắt phản đối bằng từ khóa → câu trả lời chuẩn, cảnh báo tuân thủ bằng luật. **Lớp AI** tự chạy sau mỗi câu khách nói: câu nên nói ngay, 2–3 câu hỏi nên hỏi, xử lý phản đối, tín hiệu và độ sẵn sàng chốt, bước tiếp. Đọc gợi ý vào tai nghe. Kết thúc là phân tích đầy đủ. |
@@ -131,10 +133,24 @@ Biến môi trường (`.env.example`):
 ## Ảnh màn hình
 
 <details open>
-<summary><b>Tổng quan</b> — quản lý và sale</summary>
+<summary><b>Tổng quan</b> — 4 nút lớn, quản lý và sale</summary>
 
 ![Tổng quan quản lý](tai-lieu/anh-man-hinh/01-tong-quan-quan-ly.png)
 ![Tổng quan sale](tai-lieu/anh-man-hinh/02-tong-quan-sale.png)
+</details>
+
+<details open>
+<summary><b>Gọi điện với AI</b> — quay số, nhấc máy, nói chuyện bằng giọng</summary>
+
+![Gọi điện với AI](tai-lieu/anh-man-hinh/27-goi-dien.png)
+![Nhấc máy](tai-lieu/anh-man-hinh/28-nhac-may.png)
+![Đang gọi](tai-lieu/anh-man-hinh/29-dang-goi.png)
+</details>
+
+<details>
+<summary><b>Khởi động workspace mới</b> — nạp DNA và sản phẩm, có thể bỏ qua</summary>
+
+![Khởi động](tai-lieu/anh-man-hinh/30-khoi-dong.png)
 </details>
 
 <details open>

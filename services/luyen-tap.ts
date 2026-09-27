@@ -123,3 +123,23 @@ Yêu cầu: nhan_xet_chung 3–4 câu; diem_manh 2–3 ý; can_cai_thien 2–3 �
 export async function huyPhien(q: Truy, o: { phienId: string; nguoiDungId: string }) {
   await q.query("update phien_luyen_tap set trang_thai = 'huy', ket_thuc_luc = now() where id = $1 and nguoi_dung_id = $2 and trang_thai = 'dang'", [o.phienId, o.nguoiDungId]);
 }
+
+/** Nhấc máy: khách nói câu đầu tiên («Alô…») khi hội thoại còn trống — dùng cho chế độ gọi điện. */
+export async function khachMoLoi(q: Truy, o: { workspaceId: string; phienId: string; nguoiDungId: string }): Promise<{ khach: LuotKhach; lichSu: LuotHoiThoai[]; cheDo: string }> {
+  const p = await layPhien(q, o.phienId);
+  if (!p || p.nguoi_dung_id !== o.nguoiDungId) throw new Error("Không tìm thấy phiên");
+  if (p.trang_thai !== "dang") throw new Error("Phiên đã kết thúc");
+  if (p.lich_su.length > 0) { const cuoi = [...p.lich_su].reverse().find((l) => l.vai === "khach"); return { khach: { noi_dung: cuoi?.noi_dung ?? "", cam_xuc: "trung_tinh", phan_doi_dang_neu: null, san_sang_chot: 20, ket_thuc: false }, lichSu: p.lich_su, cheDo: "co_san" }; }
+  const kq = await goiAI({
+    workspaceId: o.workspaceId, tacVu: "khach_tra_loi", schema: luotKhachSchema, timeoutMs: 60_000,
+    prompt: `Bạn ĐÓNG VAI KHÁCH HÀNG vừa nhấc máy nghe một cuộc gọi lạ. HỒ SƠ KHÁCH (bạn): ${JSON.stringify(p.persona)}
+${p.disc ? `TÍNH CÁCH DISC: ${tomTatDisc(p.disc)}` : ""}
+Nói câu đầu tiên khi nhấc máy, 1 câu ngắn tự nhiên đúng tính cách (ví dụ «Alô, ai đấy ạ?», «Alô, tôi nghe.», «Dạ alô, ai gọi đấy?»). cam_xuc trung_tinh, phan_doi_dang_neu null, san_sang_chot 10, ket_thuc false.`,
+    cauTrucJson: `{"noi_dung":"string","cam_xuc":"trung_tinh","phan_doi_dang_neu":null,"san_sang_chot":10,"ket_thuc":false}`,
+    duPhong: () => ({ noi_dung: p.disc === "D" ? "Alô, ai đấy? Nói nhanh giúp tôi, tôi đang bận." : p.disc === "I" ? "Alô, dạ tôi nghe đây, ai gọi thế ạ?" : p.disc === "C" ? "Alô, xin hỏi ai đang gọi và có việc gì ạ?" : "Alô, tôi nghe ạ.", cam_xuc: "trung_tinh" as const, phan_doi_dang_neu: null, san_sang_chot: 10, ket_thuc: false }),
+  });
+  const luc = new Date().toISOString();
+  const lichSu: LuotHoiThoai[] = [{ vai: "khach", noi_dung: kq.duLieu.noi_dung, luc }];
+  await q.query("update phien_luyen_tap set lich_su = $2 where id = $1", [o.phienId, JSON.stringify(lichSu)]);
+  return { khach: kq.duLieu, lichSu, cheDo: kq.cheDo };
+}

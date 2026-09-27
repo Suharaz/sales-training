@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { layPhien as layPhienDangNhap } from "@/services/xac-thuc";
 import { voiWorkspace } from "@/services/workspace-guard";
-import { guiLuot, ketThucPhien, huyPhien } from "@/services/luyen-tap";
+import { guiLuot, ketThucPhien, huyPhien, khachMoLoi } from "@/services/luyen-tap";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -17,6 +17,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
     if (body.hanh_dong === "ket_thuc") {
       const r = await voiWorkspace(phien.workspaceId, (q) => ketThucPhien(q, { workspaceId: phien.workspaceId, phienId: id, nguoiDungId: phien.nguoiDungId, muiGio: phien.muiGio }));
+      return NextResponse.json(r);
+    }
+    if (body.hanh_dong === "mo_loi") {
+      const r = await voiWorkspace(phien.workspaceId, (q) => khachMoLoi(q, { workspaceId: phien.workspaceId, phienId: id, nguoiDungId: phien.nguoiDungId }));
       return NextResponse.json(r);
     }
     if (body.hanh_dong === "huy") {

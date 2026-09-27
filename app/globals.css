@@ -81,3 +81,6 @@ select.o-nhap { appearance: auto; }
 .luoi-kpi { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 @media (max-width: 900px) { .an-mobile { display: none !important; } }
 @media print { aside, header, nav, .khong-in { display: none !important; } main { padding: 0 !important; } .the { box-shadow: none; } body { background: #fff; } }
+.muc-sidebar.muc-noi-bat { background: var(--gradient-cta); color: #fff; font-weight: 700; margin: 4px 0; box-shadow: 0 6px 16px rgba(37,99,235,.25); }
+.muc-sidebar.muc-noi-bat svg { color: #fff; }
+.muc-sidebar.muc-noi-bat:hover { filter: brightness(1.06); color: #fff; }

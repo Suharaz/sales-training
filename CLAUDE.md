@@ -40,6 +40,11 @@ Giao diện SÁNG mặc định (nút đổi tối trên header, lưu localStora
 - UX: `NutCho` (useFormStatus) cho mọi nút gọi AI, `ThanhTienTrinh` khi chuyển trang/submit, `loading.tsx` khung xương cho từng nhóm route, sinh DISC từng nhóm qua `/api/disc` có tiến độ (1/4…).
 - Đổi `PHIEN_SECRET` sẽ làm khóa đã lưu không giải mã được (người dùng nhập lại).
 
+## Đợt 6 — v1.1.0 (28/09/2026)
+- `/goi-dien` (menu nổi bật «Gọi điện với AI»): tạo phiên → `/luyen-tap/[id]?goi=1` → màn «Nhấc máy» (`ManHinhLuyenTap` prop `goiDien`) → API `mo_loi` (`khachMoLoi`: khách nói «Alô» trước) → chế độ gọi bằng giọng tự bật.
+- `/bat-dau`: khởi động 2 bước (DNA → sản phẩm, có Bỏ qua); cột `workspace.khoi_dong_xong` (migration 007); trang chủ quản lý chuyển hướng khi chưa xong và chưa có DNA. Tổng quan có 4 `NutLon`.
+- `CHANGELOG.md` + tag `v1.1.0`.
+
 ## Lệnh
 `pnpm dev` (3020) · `pnpm build` · `pnpm test` (21 core) · `pnpm test:db` (8, cần DB local) · `pnpm typecheck` · `pnpm db:init` · `pnpm db:seed` · `pnpm thu:ai` (chạy trọn luồng với Claude thật) · `./deploy/len-cloudflare.sh` (tunnel) · `./deploy/dung.sh`.
 

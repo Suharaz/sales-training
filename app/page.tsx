@@ -15,11 +15,21 @@ import { danhSachKhoa, hocVienRuiRo } from "@/services/dao-tao";
 import { layWorkspace } from "@/services/workspace";
 import { TEN_KY_NANG, xepTheoDiem } from "@/core/khung-ky-nang";
 import { hangKeTiep } from "@/core/gamification";
+import { NutLon } from "@/components/NutLon";
+import { layDna } from "@/services/dna";
+import { dnaDaNap } from "@/core/dna";
+import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
-export default async function TrangTongQuan() {
+export default async function TrangTongQuan({ searchParams }: { searchParams: Promise<{ chao?: string }> }) {
   const { phien, ws } = await nguCanhTrang();
-  if (phien.vaiTro === "quan_ly") return <TongQuanQuanLy />;
+  const { chao } = await searchParams;
+  if (phien.vaiTro === "quan_ly") {
+    const [wsCd0, dna0] = await ws(async (q) => Promise.all([layWorkspace(q, phien.workspaceId), layDna(q)]));
+    if (!wsCd0.khoi_dong_xong && !dnaDaNap(dna0)) redirect("/bat-dau");
+    return <TongQuanQuanLy chao={!!chao} dnaDaCo={dnaDaNap(dna0)} />;
+  }
+  const dnaSale = await ws((q) => layDna(q));
   const [hs, diem, phienGan, nv, goi, khoa] = await ws(async (q) => Promise.all([
     hoSoKyNang(q, phien.nguoiDungId), diemCuaToi(q, phien.nguoiDungId, phien.muiGio), danhSachPhien(q, { nguoiDungId: phien.nguoiDungId, gioiHan: 5 }),
     danhSachNhiemVu(q, { nguoiDungId: phien.nguoiDungId }), goiHuanLuyenMoiNhat(q, phien.nguoiDungId), danhSachKhoa(q, phien.nguoiDungId),
@@ -29,7 +39,14 @@ export default async function TrangTongQuan() {
   const nvMo = nv.filter((n) => n.trang_thai === "mo");
   return (
     <KhungShell phien={phien} duongDan="/" tieuDe={`Chào ${phien.ten.split(" ").slice(-1)[0]}, luyện hôm nay chứ?`} moTa="Tiến bộ của bạn trong 90 ngày qua"
-      hanhDong={<Link href="/luyen-tap/moi" className="nut nut-chinh"><Icon ten="luyen_tap" size={16} />Luyện role-play ngay</Link>}>
+      hanhDong={<Link href="/goi-dien" className="nut nut-chinh"><Icon ten="cuoc_goi" size={16} />Gọi điện với AI</Link>}>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 mb-5">
+        <NutLon href="/goi-dien" ten="Gọi điện với AI" mo_ta="Khách ảo nhấc máy, bạn nói bằng giọng" icon="cuoc_goi" mau="var(--nhan)" noiBat />
+        <NutLon href="/luyen-tap/moi" ten="Role-play" mo_ta="Luyện bằng chat, chọn phản đối" icon="luyen_tap" mau="var(--tim)" />
+        <NutLon href="/kich-ban/disc" ten="Kịch bản DISC" mo_ta="Xem cách chốt cho 4 nhóm khách" icon="nhan_vien" mau="var(--cam)" />
+        <NutLon href="/huan-luyen/toi" ten="Huấn luyện của tôi" mo_ta="Radar kỹ năng và gói luyện tập" icon="huan_luyen" mau="var(--ngoc)" />
+      </div>
+      {!dnaDaNap(dnaSale) && <div className="thong-bao thong-bao-vang mb-4">Doanh nghiệp chưa nạp DNA nên AI đang đóng vai khách theo kiểu trung tính. Nhờ quản lý vào «DNA doanh nghiệp» để khách ảo và gợi ý sát thực tế hơn.</div>}
       <div className="luoi-kpi mb-5">
         <TheKpi ten="Điểm kỹ năng TB" giaTri={hs?.diemTb ?? "—"} phu={hs?.diemTuan != null && hs.diemTuanTruoc != null ? `${hs.diemTuan - hs.diemTuanTruoc >= 0 ? "▲" : "▼"} ${Math.abs(hs.diemTuan - hs.diemTuanTruoc)} so với tuần trước` : "Chưa đủ dữ liệu so sánh"} icon="ngoi_sao" mau="var(--nhan)" />
         <TheKpi ten="Phiên role-play" giaTri={hs?.soPhien ?? 0} phu="đã hoàn thành" icon="luyen_tap" mau="var(--tim)" />
@@ -89,7 +106,7 @@ export default async function TrangTongQuan() {
   );
 }
 
-async function TongQuanQuanLy() {
+async function TongQuanQuanLy({ chao, dnaDaCo }: { chao: boolean; dnaDaCo: boolean }) {
   const { phien, ws } = await nguCanhTrang();
   const [ins, mt, bxh, pdCho, dmCho, nv, wsCd] = await ws(async (q) => Promise.all([insightDoi(q), maTranDoi(q), bangXepHang(q, { nguoiXemId: phien.nguoiDungId, gioiHan: 5 }), khoPhanDoi(q, { trangThai: "nhap" }), thuVienDoanMau(q, { trangThai: "nhap" }), danhSachNhiemVu(q, {}), layWorkspace(q, phien.workspaceId)]));
   const rotHoc = await ws((q) => hocVienRuiRo(q, wsCd.nguong_rot_hoc_ngay));
@@ -97,6 +114,13 @@ async function TongQuanQuanLy() {
   return (
     <KhungShell phien={phien} duongDan="/" tieuDe="Tổng quan Coaching" moTa="Sức khỏe kỹ năng của đội sale trong 90 ngày qua"
       hanhDong={<><Link href="/cuoc-goi/moi" className="nut"><Icon ten="tai_len" size={16} />Nạp cuộc gọi</Link><Link href="/huan-luyen" className="nut nut-chinh"><Icon ten="huan_luyen" size={16} />Ma trận kỹ năng</Link></>}>
+      {chao && <div className="thong-bao thong-bao-xanh mb-4">Khởi động xong. AI đã nắm DNA và sản phẩm của doanh nghiệp — thử «Gọi điện với AI» hoặc tạo kịch bản DISC ngay.</div>}
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 mb-5">
+        <NutLon href="/goi-dien" ten="Gọi điện với AI" mo_ta="Thử khách ảo nói chuyện bằng giọng" icon="cuoc_goi" mau="var(--nhan)" noiBat />
+        <NutLon href="/luyen-tap/moi" ten="Role-play" mo_ta="Luyện bằng chat với khách ảo" icon="luyen_tap" mau="var(--tim)" />
+        <NutLon href={dnaDaCo ? "/san-pham" : "/bat-dau"} ten="Nạp DNA · Sản phẩm" mo_ta={dnaDaCo ? "DNA đã có — cập nhật sản phẩm" : "Cho AI biết bạn bán gì, cho ai"} icon="huan_luyen" mau="var(--xanh)" />
+        <NutLon href="/kich-ban/disc" ten="Tạo kịch bản DISC" mo_ta="AI viết kịch bản chốt cho 4 nhóm khách" icon="nhan_vien" mau="var(--cam)" />
+      </div>
       <div className="luoi-kpi mb-5">
         <TheKpi ten="Điểm chất lượng TB" giaTri={ins.diemTb ?? "—"} phu="role-play + cuộc gọi" icon="ngoi_sao" mau="var(--nhan)" />
         <TheKpi ten="Tỷ lệ thắng" giaTri={ins.tyLeThang != null ? `${ins.tyLeThang}%` : "—"} phu={`${ins.soCuocGoi} cuộc gọi đã phân tích`} icon="cup" mau="var(--xanh)" />
