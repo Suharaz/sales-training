@@ -2,14 +2,15 @@
 import "server-only";
 import type { Truy } from "@/db/ket-noi";
 import { voiWorkspace } from "./workspace-guard";
-import { yeuCauPhien, dangXuat, type Phien } from "./xac-thuc";
+import { yeuCauPhien, type Phien } from "./xac-thuc";
 import { redirect } from "next/navigation";
 export type NguCanh = { phien: Phien; ws: <T>(fn: (q: Truy) => Promise<T>) => Promise<T> };
 export async function nguCanhTrang(): Promise<NguCanh> {
   const phien = await yeuCauPhien();
   // Phiên cũ trỏ tới workspace/người dùng không còn (DB dựng lại, tài khoản bị xóa) → đăng xuất sạch thay vì vỡ trang.
   const conHopLe = await voiWorkspace(phien.workspaceId, async (q) => (await q.query("select 1 from nguoi_dung where id = $1 and hoat_dong", [phien.nguoiDungId])).rowCount === 1).catch(() => false);
-  if (!conHopLe) { await dangXuat(); redirect("/dang-nhap?loi=" + encodeURIComponent("Phiên đăng nhập không còn hợp lệ, vui lòng đăng nhập lại.")); }
+  // Không được xóa cookie trong lúc render → chuyển sang route đăng xuất (GET) để xóa cookie rồi về trang đăng nhập.
+  if (!conHopLe) redirect("/api/dang-xuat?ve=" + encodeURIComponent("/dang-nhap?loi=" + encodeURIComponent("Phiên đăng nhập không còn hợp lệ, vui lòng đăng nhập lại.")));
   return { phien, ws: (fn) => voiWorkspace(phien.workspaceId, fn) };
 }
 export function dinhDangNgay(s: string | null | undefined, muiGio = "Asia/Ho_Chi_Minh"): string {
