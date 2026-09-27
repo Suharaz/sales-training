@@ -33,6 +33,13 @@ Giao diện SÁNG mặc định (nút đổi tối trên header, lưu localStora
 - Tích hợp: role-play chọn nhóm khách (hoặc ngẫu nhiên) → persona diễn đúng nhóm, chấm thêm `phu_hop_disc`; phân tích cuộc gọi trả `disc` (nhóm, tin cậy, lý do, gợi ý lần sau) lưu cột `cuoc_goi.disc`; copilot đoán nhóm (lớp luật + AI) và nạp kịch bản nhóm đã duyệt vào gợi ý; báo cáo thắng theo nhóm; khóa nền có module DISC + quiz.
 - Tác vụ AI mới: `sinh_kich_ban_disc` (~10–20 giây/nhóm qua CLI).
 
+## Đợt 5 — Giọng nói đám mây + UX (27/09/2026)
+- **ElevenLabs / Azure Speech do người dùng tự kết nối** trong app (`/cai-dat/giong-noi`, bảng `tich_hop_giong_noi`, khóa mã hóa AES-256-GCM qua `core/ma-hoa.ts` với khóa dẫn xuất từ `PHIEN_SECRET`). `services/giong-noi.ts`: kiểm tra kết nối (danh sách giọng ElevenLabs, token Azure), TTS mp3 (`/api/giong-noi/doc`), token STT Azure 10 phút (`/api/giong-noi/token`). Trình duyệt không bao giờ thấy khóa.
+- Client `core/giong-noi.ts`: `docTuDong()` (đám mây nếu có, tách câu phát sớm, rơi về giọng trình duyệt), `batNghe()` hợp nhất Azure STT (SDK `microsoft-cognitiveservices-speech-sdk`, import động) / Web Speech.
+- Role-play **«Gọi bằng giọng»**: nghe mic liên tục → ngừng 0,9 giây là gửi → khách trả lời bằng giọng → nói chen là khách im. Copilot cuộc gọi thật dùng Azure STT khi cấu hình.
+- UX: `NutCho` (useFormStatus) cho mọi nút gọi AI, `ThanhTienTrinh` khi chuyển trang/submit, `loading.tsx` khung xương cho từng nhóm route, sinh DISC từng nhóm qua `/api/disc` có tiến độ (1/4…).
+- Đổi `PHIEN_SECRET` sẽ làm khóa đã lưu không giải mã được (người dùng nhập lại).
+
 ## Lệnh
 `pnpm dev` (3020) · `pnpm build` · `pnpm test` (21 core) · `pnpm test:db` (8, cần DB local) · `pnpm typecheck` · `pnpm db:init` · `pnpm db:seed` · `pnpm thu:ai` (chạy trọn luồng với Claude thật) · `./deploy/len-cloudflare.sh` (tunnel) · `./deploy/dung.sh`.
 

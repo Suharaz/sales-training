@@ -39,14 +39,14 @@ Tài liệu gốc là spec TAKI FUNNEL OS v2 (module M15 Sales Engine, M18 LMS) 
 | **Sản phẩm** | Hồ sơ đầy đủ theo bậc thang giá trị (tầng 0–4): đối tượng, kết quả kỳ vọng, hình thức, thời lượng, điểm bán hàng, phản đối thường gặp, chính sách, so sánh đối thủ, tài liệu. Dùng chung cho role-play, phân tích, gợi ý và copilot. |
 | **Copilot cuộc gọi thật** | Trình duyệt nghe cuộc gọi (loa ngoài) và chuyển thành lời thoại theo người nói (phím cách để đổi, bấm câu để sửa vai). **Lớp tức thì**: bắt phản đối bằng từ khóa → câu trả lời chuẩn, cảnh báo tuân thủ bằng luật. **Lớp AI** tự chạy sau mỗi câu khách nói: câu nên nói ngay, 2–3 câu hỏi nên hỏi, xử lý phản đối, tín hiệu và độ sẵn sàng chốt, bước tiếp. Đọc gợi ý vào tai nghe. Kết thúc là phân tích đầy đủ. |
 | **Kịch bản chốt sale theo DISC** | Mỗi sản phẩm × 4 nhóm khách (D thống trị, I ảnh hưởng, S ổn định, C tuân thủ) có kịch bản 8 phần: mở đầu, câu hỏi khai thác, trình bày giá trị, 3 phản đối điển hình, chốt, theo dõi, từ nên dùng, từ nên tránh. **AI sinh trọn bộ** từ DNA và hồ sơ sản phẩm, quản lý sửa và duyệt, có bản in 4 nhóm một trang. Role-play cho chọn nhóm khách và chấm «nói đúng kiểu khách»; phân tích cuộc gọi nhận diện nhóm và gợi ý lần sau; copilot đoán nhóm ngay trong cuộc gọi và đổi gợi ý theo kịch bản nhóm; báo cáo tỷ lệ thắng theo nhóm; khóa nền có module DISC. |
-| **Luyện tập role-play** | AI dựng persona theo sản phẩm và độ khó (dễ / vừa / khó), chọn phản đối muốn luyện; chat từng lượt; **khách nói thành tiếng bằng giọng Việt tự nhiên (chọn giọng, tốc độ), mic nói thay gõ**; copilot bên phải hiện kịch bản và câu trả lời chuẩn khi khách phản đối; kết thúc → radar 6 tiêu chí, nhận xét, câu nói tốt hơn theo từng lượt. |
+| **Luyện tập role-play** | AI dựng persona theo sản phẩm, nhóm DISC và độ khó, chọn phản đối muốn luyện; chat từng lượt hoặc **gọi bằng giọng** (nói vào mic, khách trả lời bằng giọng ElevenLabs / Azure / trình duyệt, ngắt lời được); copilot bên phải hiện kịch bản và câu trả lời chuẩn khi khách phản đối; kết thúc → radar 6 tiêu chí, nhận xét, câu nói tốt hơn theo từng lượt. |
 | **Phân tích cuộc gọi** | **Ghi âm trực tiếp** bằng Web Speech API (transcript theo người nói, không lưu audio) hoặc dán transcript; AI tóm tắt nhu cầu / phản đối / cam kết / bước tiếp; scorecard kỹ năng kèm trích dẫn; phản đối mới vào **hàng chờ duyệt**; đoạn xử lý hay vào **thư viện mẫu**; cam kết thành **nhiệm vụ có hạn**; cảnh báo tuân thủ (hứa kết quả, bịa số liệu, nói xấu đối thủ). |
 | **Huấn luyện AI** | Ma trận kỹ năng đội; radar cá nhân vs đội vs top 20%; insight (phản đối thua phổ biến, tiêu chí yếu nhất); **gói huấn luyện cá nhân** (điểm yếu, bài học đề xuất, bài tập role-play, lời khuyên); **phân công coaching**: quản lý giao bài tập role-play hoặc việc có hạn. |
 | **Kịch bản & Phản đối** | Kịch bản gọi 4 phần theo sản phẩm; kho phản đối 7 loại với câu trả lời chuẩn, đếm số lần gặp; **AI gợi ý câu trả lời** theo khung Ghi nhận → Làm rõ → Giá trị → Kiểm tra; sản phẩm và điểm bán hàng. |
 | **Đào tạo (LMS)** | Khóa → module → bài (văn bản, video nhúng, quiz); chống tua ảo; mốc tiến độ phát đúng một lần; **soạn khóa** cho quản lý (quiz nhập bằng văn bản); cảnh báo rớt học theo ngưỡng ngày. |
 | **Gamification** | Điểm theo hành vi với giới hạn chống lạm dụng, chuỗi ngày liên tiếp, hạng Bronze → Diamond, bảng xếp hạng tôn trọng ẩn danh; **chứng chỉ** mã tất định, trang xác thực công khai, in PDF, chia sẻ Facebook / Zalo. |
 | **Quản trị** | Báo cáo đội theo kỳ 7 / 30 / 90 ngày + **xuất CSV**; nhiệm vụ (cam kết với khách không xóa được, chỉ hoàn thành hoặc hủy kèm lý do); nhân viên và phân quyền; cài đặt workspace (tên, múi giờ, ngưỡng rớt học); nhật ký kiểm toán; cron ngày phát sự kiện rớt học và nhiệm vụ quá hạn. |
-| **Giao diện** | Sáng mặc định, chế độ tối một nút; tiếng Việt toàn bộ; SVG tự dựng (radar, sparkline, icon); responsive. |
+| **Giao diện** | Sáng mặc định, chế độ tối một nút; thanh tiến trình khi chuyển trang, khung xương khi tải, nút chờ nói rõ AI đang làm gì và mất bao lâu, sinh kịch bản DISC có tiến độ từng nhóm; tiếng Việt toàn bộ; SVG tự dựng; responsive. |
 
 ## Bộ não AI
 
@@ -62,7 +62,11 @@ Mọi lời gọi Claude đi qua **một AI Gateway duy nhất** ([`services/ai-
 
 Chín tác vụ: `sinh_persona` · `khach_tra_loi` · `cham_luyen_tap` · `phan_tich_cuoc_goi` · `goi_huan_luyen` · `goi_y_tra_loi` · `trich_dna` · `copilot` · `sinh_kich_ban_disc`. Mọi tác vụ tự nhận **tóm tắt DNA** (phiên bản được ghi vào log); `copilot` dùng model nhanh (`AI_MODEL_NHANH`) và cửa sổ 14 lượt gần nhất. Ở chế độ `cli`, gateway gọi Claude Code với system prompt riêng và tắt toàn bộ tool/MCP nên một gợi ý copilot mất khoảng 8 giây. Script [`scripts/thu-ai.ts`](scripts/thu-ai.ts) chạy trọn luồng với Claude thật (`pnpm thu:ai`).
 
-**Giọng nói.** Nhận dạng và đọc bằng Web Speech API của trình duyệt (không cần dịch vụ ngoài). Bộ chọn giọng tự xếp hạng giọng tiếng Việt tự nhiên nhất có sẵn: Microsoft Edge (HoaiMy / NamMinh Natural) tốt nhất, rồi Google Tiếng Việt trên Chrome, rồi Linh trên macOS; người dùng chọn giọng và tốc độ, câu được tách để ngắt nghỉ tự nhiên.
+**Giọng nói.** Ba lớp, người dùng tự chọn trong **Cài đặt → Giọng nói AI** (có hướng dẫn lấy khóa từng bước, nút kiểm tra kết nối và nghe thử):
+- **ElevenLabs**: giọng tự nhiên nhất, có cảm xúc, nhân bản được giọng thật; chọn giọng từ tài khoản, model Flash v2.5 cho tiếng Việt.
+- **Azure Speech**: giọng HoaiMy / NamMinh neural, gói miễn phí 0,5 triệu ký tự/tháng; kiêm **nhận dạng giọng nói** chính xác hơn trình duyệt và chạy được trên Safari (token 10 phút, không lộ khóa).
+- **Trình duyệt** (miễn phí, giọng máy): tự chọn giọng tiếng Việt tốt nhất có sẵn; Edge tốt nhất.
+Khóa API được mã hóa AES-256 trước khi lưu và không bao giờ gửi xuống trình duyệt. Trong role-play, chế độ **«Gọi bằng giọng»**: sale nói vào mic, ngừng một giây là gửi, khách trả lời bằng giọng, nói chen là khách im.
 
 ## Kiến trúc
 
@@ -184,6 +188,12 @@ Biến môi trường (`.env.example`):
 ![Khóa học](tai-lieu/anh-man-hinh/13-khoa-hoc.png)
 ![Bài học](tai-lieu/anh-man-hinh/14-bai-hoc.png)
 ![Soạn khóa](tai-lieu/anh-man-hinh/15-soan-khoa.png)
+</details>
+
+<details>
+<summary><b>Giọng nói AI: kết nối ElevenLabs / Azure</b></summary>
+
+![Cài đặt giọng nói](tai-lieu/anh-man-hinh/26-giong-noi.png)
 </details>
 
 <details>

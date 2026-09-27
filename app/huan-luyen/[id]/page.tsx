@@ -6,6 +6,7 @@ import { Radar } from "@/components/Radar";
 import { TheKpi } from "@/components/TheKpi";
 import { ThongBaoAI } from "@/components/ThongBaoAI";
 import { NhanDiem } from "@/components/NhanDiem";
+import { NutCho } from "@/components/NutCho";
 import { nguCanhTrang, dinhDangNgay } from "@/services/trang";
 import { hoSoKyNang, maTranDoi, goiHuanLuyenMoiNhat, sinhGoiHuanLuyen, thuVienDoanMau } from "@/services/huan-luyen";
 import { danhSachPhien } from "@/services/luyen-tap";
@@ -42,7 +43,7 @@ export default async function TrangHoSo({ params }: { params: Promise<{ id: stri
   const dmNenNghe = goi ? dm.filter((d) => goi.noi_dung.bai_tap.some((b) => b.loai_phan_doi === d.loai_phan_doi)).slice(0, 4) : [];
   return (
     <KhungShell phien={phien} duongDan="/huan-luyen" tieuDe={id === phien.nguoiDungId ? "Huấn luyện của tôi" : hs.ten} moTa={`${hs.chucDanh || "Sale"} · ${hs.soPhien} phiên role-play · ${hs.soCuocGoi} cuộc gọi · 90 ngày`}
-      hanhDong={<form action={sinh}><button className="nut nut-chinh">{goi ? "Sinh lại gói huấn luyện" : "Nhờ AI sinh gói huấn luyện"}</button></form>}>
+      hanhDong={<form action={sinh}><NutCho dangLam="AI đang đọc dữ liệu và soạn gói (30–60 giây)…">{goi ? "Sinh lại gói huấn luyện" : "Nhờ AI sinh gói huấn luyện"}</NutCho></form>}>
       <div className="luoi-kpi mb-4">
         <TheKpi ten="Điểm TB" giaTri={hs.diemTb ?? "—"} phu={hs.diemTuan != null && hs.diemTuanTruoc != null ? `${hs.diemTuan - hs.diemTuanTruoc >= 0 ? "▲" : "▼"} ${Math.abs(hs.diemTuan - hs.diemTuanTruoc)} so với tuần trước` : "Chưa đủ dữ liệu"} icon="ngoi_sao" mau="var(--nhan)" />
         <TheKpi ten="Tỷ lệ thắng" giaTri={hs.tyLeThang != null ? `${hs.tyLeThang}%` : "—"} icon="cup" mau="var(--xanh)" />
@@ -56,7 +57,7 @@ export default async function TrangHoSo({ params }: { params: Promise<{ id: stri
           <div className="the p-4"><div className="font-semibold mb-2">Cuộc gọi gần đây</div>{goiDs.length === 0 ? <div className="mo-ta">—</div> : <div className="flex flex-col gap-1 text-sm">{goiDs.map((c) => <Link key={c.id} href={`/cuoc-goi/${c.id}`} className="flex justify-between py-1 border-b" style={{ borderColor: "var(--vien)" }}><span className="truncate">{c.ten_khach || dinhDangNgay(c.goi_luc, phien.muiGio)}</span><NhanDiem diem={c.diem_tong} nhoGon /></Link>)}</div>}</div>
         </div>
         <div className="flex flex-col gap-4">
-          {!goi ? <div className="the p-8 text-center"><div className="font-semibold text-lg">Chưa có gói huấn luyện cá nhân</div><div className="mo-ta mt-1">AI sẽ đọc radar, nhận xét từ các phiên và phản đối hay gặp để đề xuất bài học, bài tập role-play và lời khuyên.</div><form action={sinh} className="mt-4"><button className="nut nut-chinh">Sinh gói ngay</button></form></div> : (
+          {!goi ? <div className="the p-8 text-center"><div className="font-semibold text-lg">Chưa có gói huấn luyện cá nhân</div><div className="mo-ta mt-1">AI sẽ đọc radar, nhận xét từ các phiên và phản đối hay gặp để đề xuất bài học, bài tập role-play và lời khuyên.</div><form action={sinh} className="mt-4"><NutCho dangLam="AI đang soạn gói (30–60 giây)…">Sinh gói ngay</NutCho></form></div> : (
             <>
               <div className="the p-5"><div className="flex items-center justify-between mb-2"><div className="font-semibold">Gói huấn luyện cá nhân</div><span className="text-xs" style={{ color: "var(--chu-mo)" }}>{dinhDangNgay(goi.tao_luc, phien.muiGio)}</span></div>
                 <p className="text-sm leading-relaxed">{goi.noi_dung.tom_tat}</p>

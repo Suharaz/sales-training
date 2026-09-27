@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { KhungShell } from "@/components/KhungShell";
 import { ThongBaoAI } from "@/components/ThongBaoAI";
+import { NutCho } from "@/components/NutCho";
 import { nguCanhTrang } from "@/services/trang";
 import { danhSachSanPham } from "@/services/kich-ban";
 import { danhSachNhanVien } from "@/services/nhan-vien";
@@ -58,7 +59,7 @@ export default async function TrangNapCuocGoi({ searchParams }: { searchParams: 
             <label className="flex flex-col gap-1"><span className="font-medium">Thời lượng</span><input name="thoi_luong" className="o-nhap" placeholder="23:18" /></label>
             <label className="flex flex-col gap-1"><span className="font-medium">Lúc gọi</span><input name="goi_luc" type="datetime-local" className="o-nhap" /></label>
           </div>
-          <button type="submit" className="nut nut-chinh justify-center py-2.5">Nạp và phân tích</button>
+          <NutCho dangLam="AI đang phân tích cuộc gọi (20–60 giây)…" className="nut nut-chinh justify-center py-2.5">Nạp và phân tích</NutCho>
           <div className="text-[11px]" style={{ color: "var(--chu-mo)" }}>Điểm cuộc gọi chỉ quản lý và chính sale xem được. Phản đối mới AI phát hiện vào hàng chờ duyệt, không tự sửa kho.</div>
         </div>
       </form>

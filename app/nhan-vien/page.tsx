@@ -6,6 +6,7 @@ import { nguCanhTrang, dinhDangNgayNgan } from "@/services/trang";
 import { yeuCauQuanLy } from "@/services/xac-thuc";
 import { danhSachNhanVien, themNhanVien, capNhatNhanVien } from "@/services/nhan-vien";
 import { TEN_VAI_TRO } from "@/core/phan-quyen";
+import { NutCho } from "@/components/NutCho";
 export const dynamic = "force-dynamic";
 export default async function TrangNhanVien({ searchParams }: { searchParams: Promise<{ loi?: string; ok?: string }> }) {
   await yeuCauQuanLy();
@@ -44,7 +45,7 @@ export default async function TrangNhanVien({ searchParams }: { searchParams: Pr
         <form action={them} className="the p-4 flex flex-col gap-2 text-sm h-fit"><div className="font-semibold">Thêm nhân viên</div>
           <input name="ten" className="o-nhap" placeholder="Họ tên" required /><input name="email" type="email" className="o-nhap" placeholder="email@congty.vn" required /><input name="chuc_danh" className="o-nhap" placeholder="Chức danh" />
           <select name="vai_tro" className="o-nhap" defaultValue="sale">{Object.entries(TEN_VAI_TRO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-          <input name="mat_khau" type="password" className="o-nhap" placeholder="Mật khẩu (≥ 8 ký tự, 2 loại ký tự)" required /><button className="nut nut-chinh">Thêm</button></form>
+          <input name="mat_khau" type="password" className="o-nhap" placeholder="Mật khẩu (≥ 8 ký tự, 2 loại ký tự)" required /><NutCho dangLam="Đang thêm…">Thêm</NutCho></form>
       </div>
     </KhungShell>
   );

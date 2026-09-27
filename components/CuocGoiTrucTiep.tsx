@@ -7,9 +7,8 @@ import { useRouter } from "next/navigation";
 import { Icon } from "./Icon";
 import { doanLoaiPhanDoi, TEN_LOAI_PHAN_DOI, type LoaiPhanDoi } from "@/core/phan-doi";
 import type { GoiYCopilot } from "@/core/ai-kieu";
-import { docVanBan, dungDoc } from "@/core/giong-noi";
+import { docTuDong, dungDoc, batNghe, cauHinhGiong, type BoNghe, type CauHinhGiongClient } from "@/core/giong-noi";
 import { DISC, doanDisc } from "@/core/disc";
-type SR = { lang: string; continuous: boolean; interimResults: boolean; start(): void; stop(): void; abort(): void; onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null; onerror: ((e: { error: string }) => void) | null; onend: (() => void) | null };
 type Dong = { vai: "sale" | "khach"; text: string; luc: number };
 type PD = { loai: LoaiPhanDoi; noi_dung: string; cau_tra_loi_chuan: string };
 type KB = { ten: string; mo_dau: string; khai_thac: string; gia_tri: string; chot: string } | null;
@@ -35,7 +34,6 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
   const [docGoiY, setDocGoiY] = useState(false);
   const [ghiChu, setGhiChu] = useState("");
   const [tab, setTab] = useState<"kich_ban" | "phan_doi">("kich_ban");
-  const rec = useRef<SR | null>(null);
   const vaiRef = useRef(vai); vaiRef.current = vai;
   const dangRef = useRef(false);
   const dongRef = useRef<Dong[]>([]); dongRef.current = dong;
@@ -45,7 +43,7 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
   const spRef = useRef(spId); spRef.current = spId;
   const docRef = useRef(docGoiY); docRef.current = docGoiY;
 
-  useEffect(() => { const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }; setHoTro(!!(w.SpeechRecognition || w.webkitSpeechRecognition)); }, []);
+  useEffect(() => { const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }; cauHinhGiong().then((c) => setHoTro(c.stt === "azure" || !!(w.SpeechRecognition || w.webkitSpeechRecognition))); }, []);
   useEffect(() => { if (!dang) return; const t = setInterval(() => setGiay((g) => g + 1), 1000); return () => clearInterval(t); }, [dang]);
   useEffect(() => { cuoiRef.current?.scrollIntoView({ behavior: "smooth" }); }, [dong, tam]);
   // Phím cách: đổi người nói (khi không gõ ô nhập)
@@ -63,34 +61,33 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
       const j = (await r.json()) as { goiY?: GoiYCopilot; cheDo?: string; loi?: string };
       if (!r.ok || !j.goiY) throw new Error(j.loi || "Lỗi copilot");
       setGoiY(j.goiY); setCheDoGoiY(`${j.cheDo === "du_phong" ? "luật" : j.cheDo === "cli" ? "Claude CLI" : "Claude API"} · ${lyDo}`);
-      if (docRef.current && j.goiY.noi_tiep) docVanBan(j.goiY.noi_tiep, { tocDo: 1.15 });
+      if (docRef.current && j.goiY.noi_tiep) docTuDong(j.goiY.noi_tiep, { tocDo: 1.15 });
     } catch (e) { if ((e as Error).name !== "AbortError") setLoi((e as Error).message); }
     finally { if (hoiRef.current === ac) setDangHoi(false); }
   }, []);
   // Tự hỏi AI 1,2 giây sau khi KHÁCH nói xong một câu (gộp nhiều câu liên tiếp)
   const henHoi = useCallback(() => { if (!tuDong) return; if (henRef.current) clearTimeout(henRef.current); henRef.current = setTimeout(() => hoiAI("khách vừa nói"), 1200); }, [hoiAI, tuDong]);
 
-  function batDau() {
-    const w = window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR };
-    const C = w.SpeechRecognition || w.webkitSpeechRecognition; if (!C) return;
-    const r = new C(); r.lang = "vi-VN"; r.continuous = true; r.interimResults = true;
-    r.onresult = (e) => {
-      let tamMoi = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const kq = e.results[i]; const t = kq[0].transcript.trim();
-        if (kq.isFinal && t) {
+  const boNghe = useRef<BoNghe | null>(null);
+  const [chGiong, setChGiong] = useState<CauHinhGiongClient | null>(null);
+  const [nhaNghe, setNhaNghe] = useState<"azure" | "trinh_duyet" | null>(null);
+  useEffect(() => { cauHinhGiong().then(setChGiong); }, []);
+  async function batDau() {
+    setLoi("");
+    try {
+      const { bo, nha } = await batNghe({
+        onTam: (t) => setTam(t),
+        onXong: (t) => {
           const v = vaiRef.current;
           setDong((d) => { const cuoi = d[d.length - 1]; return cuoi && cuoi.vai === v && Date.now() - cuoi.luc < 8000 ? [...d.slice(0, -1), { ...cuoi, text: `${cuoi.text} ${t}`, luc: Date.now() }] : [...d, { vai: v, text: t, luc: Date.now() }]; });
-          if (v === "khach") setTimeout(henHoi, 0);
-        } else tamMoi += t + " ";
-      }
-      setTam(tamMoi);
-    };
-    r.onerror = (e) => { if (e.error === "not-allowed") { setLoi("Trình duyệt chưa được cấp quyền micro."); dung(); } else if (e.error !== "no-speech" && e.error !== "aborted") setLoi(`Nhận dạng lỗi: ${e.error}`); };
-    r.onend = () => { if (dangRef.current) { try { r.start(); } catch { /* bỏ qua */ } } };
-    rec.current = r; dangRef.current = true; setDang(true); setLoi(""); r.start();
+          setTam(""); if (v === "khach") setTimeout(henHoi, 0);
+        },
+        onLoi: (m) => setLoi(m),
+      });
+      boNghe.current = bo; setNhaNghe(nha); dangRef.current = true; setDang(true);
+    } catch (e) { setLoi((e as Error).message); }
   }
-  function dung() { dangRef.current = false; setDang(false); try { rec.current?.stop(); } catch { /* bỏ qua */ } setTam(""); }
+  function dung() { dangRef.current = false; setDang(false); boNghe.current?.dung(); boNghe.current = null; setTam(""); }
   function doiVaiDong(i: number) { setDong((d) => d.map((x, k) => (k === i ? { ...x, vai: x.vai === "sale" ? "khach" : "sale" } : x))); }
 
   // Lớp 0: phản đối tức thì + cảnh báo tuân thủ tức thì (không chờ AI)
@@ -114,7 +111,7 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
     } catch (e) { setLoi((e as Error).message); setDangNap(false); }
   }
   const mm = String(Math.floor(giay / 60)).padStart(2, "0"), ss = String(giay % 60).padStart(2, "0");
-  if (hoTro === false) return <div className="the p-6 thong-bao thong-bao-vang">Trình duyệt này không hỗ trợ nhận dạng giọng nói. Dùng <b>Chrome</b> hoặc <b>Edge</b> trên máy tính (Edge có giọng đọc tiếng Việt tự nhiên nhất), hoặc dán transcript ở trang «Nạp transcript».</div>;
+  if (hoTro === false) return <div className="the p-6 thong-bao thong-bao-vang">Trình duyệt này không hỗ trợ nhận dạng giọng nói. Dùng <b>Chrome</b> hoặc <b>Edge</b>, hoặc nhờ quản lý kết nối <a href="/cai-dat/giong-noi" style={{ color: "var(--nhan-sang)" }}>Azure Speech</a> để chạy trên mọi trình duyệt, hoặc dán transcript ở trang «Nạp transcript».</div>;
   return (
     <div className="grid gap-4 lg:grid-cols-[270px_1fr_340px]">
       {/* Trái: ngữ cảnh */}
@@ -129,7 +126,7 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
       {/* Giữa: transcript */}
       <section className="the flex flex-col order-1 lg:order-2" style={{ minHeight: 560 }}>
         <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--vien)" }}>
-          <div className="flex items-center gap-3"><span className="w-3 h-3 rounded-full" style={{ background: dang ? "var(--do)" : "var(--chu-nhat)", boxShadow: dang ? "0 0 0 5px var(--do-mo)" : undefined }} /><span className="font-semibold tabular text-lg">{mm}:{ss}</span><span className="text-xs" style={{ color: "var(--chu-mo)" }}>{dang ? "AI đang lắng nghe…" : "Chưa ghi"}</span></div>
+          <div className="flex items-center gap-3"><span className="w-3 h-3 rounded-full" style={{ background: dang ? "var(--do)" : "var(--chu-nhat)", boxShadow: dang ? "0 0 0 5px var(--do-mo)" : undefined }} /><span className="font-semibold tabular text-lg">{mm}:{ss}</span><span className="text-xs" style={{ color: "var(--chu-mo)" }}>{dang ? `AI đang lắng nghe… (${nhaNghe === "azure" ? "Azure STT" : "trình duyệt"})` : "Chưa ghi"}</span>{chGiong?.stt === "trinh_duyet" && <a href="/cai-dat/giong-noi" className="text-[11px]" style={{ color: "var(--nhan-sang)" }}>Nhận dạng chính xác hơn với Azure →</a>}</div>
           <div className="flex gap-2">{!dang ? <button type="button" className="nut nut-chinh" onClick={batDau} disabled={dangNap}><Icon ten="cuoc_goi" size={16} />{dong.length ? "Ghi tiếp" : "Bắt đầu cuộc gọi"}</button> : <button type="button" className="nut nut-nguy" onClick={dung}>Tạm dừng</button>}</div>
         </div>
         <div className="flex gap-2 p-3 border-b" style={{ borderColor: "var(--vien)" }}><button type="button" className={`nut flex-1 justify-center ${vai === "sale" ? "nut-chinh" : ""}`} onClick={() => setVai("sale")}>🎧 Tôi nói ({tenSale.split(" ").slice(-1)[0]})</button><button type="button" className={`nut flex-1 justify-center ${vai === "khach" ? "nut-chinh" : ""}`} onClick={() => setVai("khach")}>🗣 Khách nói</button><span className="text-[11px] self-center" style={{ color: "var(--chu-nhat)" }}>phím cách để đổi</span></div>
@@ -160,11 +157,11 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
           <div className="the-2 p-3" style={{ borderColor: "var(--vang)" }}>
             <div className="text-xs font-semibold mb-1" style={{ color: "var(--chu-vang)" }}>Khách đang phản đối: {TEN_LOAI_PHAN_DOI[loaiTucThi as LoaiPhanDoi]} <span className="font-normal" style={{ color: "var(--chu-nhat)" }}>· tức thì</span></div>
             <div className="text-[13px]">{chuanTucThi.cau_tra_loi_chuan}</div>
-            <button type="button" className="nut nut-nho mt-2" onClick={() => docVanBan(chuanTucThi.cau_tra_loi_chuan, { tocDo: 1.15 })}>🎧 Đọc vào tai nghe</button>
+            <button type="button" className="nut nut-nho mt-2" onClick={() => docTuDong(chuanTucThi.cau_tra_loi_chuan, { tocDo: 1.15 })}>🎧 Đọc vào tai nghe</button>
           </div>)}
         {goiY ? (
           <>
-            <div className="the-2 p-3" style={{ borderColor: "var(--nhan)" }}><div className="text-xs font-semibold mb-1" style={{ color: "var(--chu-nhan)" }}>Nên nói ngay</div><div className="text-[14px] leading-relaxed">{goiY.noi_tiep}</div><button type="button" className="nut nut-nho mt-2" onClick={() => docVanBan(goiY.noi_tiep, { tocDo: 1.15 })}>🎧 Đọc</button></div>
+            <div className="the-2 p-3" style={{ borderColor: "var(--nhan)" }}><div className="text-xs font-semibold mb-1" style={{ color: "var(--chu-nhan)" }}>Nên nói ngay</div><div className="text-[14px] leading-relaxed">{goiY.noi_tiep}</div><button type="button" className="nut nut-nho mt-2" onClick={() => docTuDong(goiY.noi_tiep, { tocDo: 1.15 })}>🎧 Đọc</button></div>
             {goiY.phan_doi && <div className="the-2 p-3"><div className="text-xs font-semibold mb-1" style={{ color: "var(--chu-vang)" }}>Xử lý phản đối «{TEN_LOAI_PHAN_DOI[goiY.phan_doi.loai]}»</div><div className="text-[13px]">{goiY.phan_doi.cau_tra_loi}</div></div>}
             {goiY.cau_hoi_nen_hoi.length > 0 && <div className="the-2 p-3"><div className="text-xs font-semibold mb-1">Câu hỏi nên hỏi tiếp</div><ul className="list-disc pl-4 text-[13px] flex flex-col gap-1">{goiY.cau_hoi_nen_hoi.map((c, i) => <li key={i}>{c}</li>)}</ul></div>}
             {goiY.canh_bao.length > 0 && <div className="thong-bao thong-bao-vang"><ul className="list-disc pl-4">{goiY.canh_bao.map((c, i) => <li key={i}>{c}</li>)}</ul></div>}

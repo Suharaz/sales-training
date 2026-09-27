@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { dangNhap, layPhien } from "@/services/xac-thuc";
 import { Icon } from "@/components/Icon";
+import { NutCho } from "@/components/NutCho";
 
 export default async function TrangDangNhap({ searchParams }: { searchParams: Promise<{ loi?: string }> }) {
   if (await layPhien()) redirect("/");
@@ -23,7 +24,7 @@ export default async function TrangDangNhap({ searchParams }: { searchParams: Pr
           {loi && <div className="text-sm px-3 py-2 rounded-lg" style={{ background: "var(--do-mo)", color: "var(--chu-do)" }}>{loi}</div>}
           <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Email</span><input name="email" type="email" required autoComplete="username" className="o-nhap" placeholder="ten@congty.vn" /></label>
           <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Mật khẩu</span><input name="mat_khau" type="password" required autoComplete="current-password" className="o-nhap" /></label>
-          <button className="nut nut-chinh justify-center py-2.5" type="submit">Vào hệ thống</button>
+          <NutCho dangLam="Đang đăng nhập…" className="nut nut-chinh justify-center py-2.5">Vào hệ thống</NutCho>
           <div className="text-[11px] leading-relaxed p-3 rounded-lg" style={{ background: "var(--the-2)", color: "var(--chu-mo)" }}>
             <div className="font-semibold mb-1" style={{ color: "var(--chu)" }}>Tài khoản demo</div>
             Quản lý: <code>quanly@demo.vn</code> / <code>Demo@2026</code><br />Sale: <code>sale1@demo.vn</code> … <code>sale5@demo.vn</code> / <code>Sale@2026</code>

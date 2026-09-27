@@ -232,3 +232,12 @@ describe("DISC", () => {
     for (const n of NHOM_DISC) { expect(tomTatDisc(n)).toContain(DISC[n].ten); expect(DISC[n].phan_doi_dien_hinh.length).toBeGreaterThanOrEqual(3); }
   });
 });
+
+describe("mã hóa khóa API", () => {
+  it("mã hóa/giải mã tròn vòng, sai định dạng → null, che khóa", async () => {
+    process.env.PHIEN_SECRET = "bi-mat-kiem-thu-du-dai-32-ky-tu-1234";
+    const { maHoa, giaiMa, cheKhoa } = await import("./ma-hoa");
+    const mh = maHoa("sk_abcdef1234"); expect(mh.startsWith("v1.")).toBe(true); expect(giaiMa(mh)).toBe("sk_abcdef1234");
+    expect(giaiMa("rác")).toBeNull(); expect(giaiMa(null)).toBeNull(); expect(cheKhoa("sk_abcdef1234")).toBe("••••••••1234");
+  });
+});

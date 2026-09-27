@@ -1,4 +1,5 @@
 import type { KichBanDisc, NhomDisc } from "@/core/disc";
+import { NutCho } from "./NutCho";
 export function FormKichBanDisc({ action, sanPhamId, nhom, kb, chiXem, daDuyet }: { action: (f: FormData) => void; sanPhamId: string; nhom: NhomDisc; kb: KichBanDisc; chiXem: boolean; daDuyet: boolean }) {
   const ro = chiXem ? { readOnly: true } : {};
   const O = ({ ten, name, rows, gia_tri, goiY }: { ten: string; name: string; rows: number; gia_tri: string; goiY?: string }) => (
@@ -13,7 +14,7 @@ export function FormKichBanDisc({ action, sanPhamId, nhom, kb, chiXem, daDuyet }
       <O ten="5. Chốt" name="chot" rows={3} gia_tri={kb.chot} />
       <O ten="6. Theo dõi sau cuộc gọi" name="theo_doi" rows={2} gia_tri={kb.theo_doi} />
       <div className="grid gap-3 md:grid-cols-2"><O ten="Từ nên dùng (mỗi dòng một cụm)" name="tu_nen_dung" rows={5} gia_tri={kb.tu_nen_dung.join("\n")} /><O ten="Từ nên tránh (mỗi dòng một cụm)" name="tu_tranh" rows={5} gia_tri={kb.tu_tranh.join("\n")} /></div>
-      {!chiXem && <div className="flex gap-2"><button name="hanh_dong" value="luu" className="nut">Lưu nháp</button><button name="hanh_dong" value="duyet" className="nut nut-chinh">{daDuyet ? "Lưu và giữ duyệt" : "Lưu và duyệt"}</button></div>}
+      {!chiXem && <div className="flex gap-2"><NutCho name="hanh_dong" value="luu" className="nut" dangLam="Đang lưu…">Lưu nháp</NutCho><NutCho name="hanh_dong" value="duyet" dangLam="Đang lưu…">{daDuyet ? "Lưu và giữ duyệt" : "Lưu và duyệt"}</NutCho></div>}
     </form>
   );
 }

@@ -8,6 +8,7 @@ import { LOAI_PHAN_DOI, TEN_LOAI_PHAN_DOI, laLoaiPhanDoi, type LoaiPhanDoi } fro
 import { cheDoAI } from "@/services/ai-gateway";
 import { DISC, NHOM_DISC } from "@/core/disc";
 import { ThongBaoAI } from "@/components/ThongBaoAI";
+import { NutCho } from "@/components/NutCho";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 export default async function TrangPhienMoi({ searchParams }: { searchParams: Promise<{ phan_doi?: string; loi?: string; disc?: string }> }) {
@@ -45,7 +46,7 @@ export default async function TrangPhienMoi({ searchParams }: { searchParams: Pr
         <div className="text-sm"><div className="font-medium mb-1">Phản đối muốn luyện (tùy chọn)</div><div className="mo-ta mb-2">Không chọn thì AI tự chọn theo độ khó.</div>
           <div className="flex flex-wrap gap-2">{LOAI_PHAN_DOI.filter((l) => l !== "khac").map((l) => (
             <label key={l} className="nut nut-nho cursor-pointer has-[:checked]:bg-[var(--nhan-mo)] has-[:checked]:border-[var(--nhan)]"><input type="checkbox" name="phan_doi" value={l} defaultChecked={phan_doi === l} className="hidden" />{TEN_LOAI_PHAN_DOI[l]}</label>))}</div></div>
-        <div className="flex gap-2"><button type="submit" className="nut nut-chinh">Bắt đầu gọi</button></div>
+        <div className="flex items-center gap-3"><NutCho dangLam="AI đang dựng khách hàng ảo (10–20 giây)…">Bắt đầu gọi</NutCho><span className="text-xs" style={{ color: "var(--chu-mo)" }}>AI tạo persona theo sản phẩm, DISC và DNA của doanh nghiệp.</span></div>
       </form>
     </KhungShell>
   );

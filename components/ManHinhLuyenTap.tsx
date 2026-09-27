@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { LuotHoiThoai, LuotKhach, Persona } from "@/core/ai-kieu";
 import { Icon } from "./Icon";
 import { doanLoaiPhanDoi } from "@/core/phan-doi";
-import { danhSachGiongViet, docVanBan, dungDoc, giongDaChon, luuGiong, luuTocDo, tocDoDaChon, type GiongNoi } from "@/core/giong-noi";
+import { danhSachGiongViet, docVanBan, docTuDong, dungDoc, giongDaChon, luuGiong, luuTocDo, tocDoDaChon, cauHinhGiong, batNghe as batNgheHopNhat, type GiongNoi, type BoNghe, type CauHinhGiongClient } from "@/core/giong-noi";
 
 type KichBan = { ten: string; mo_dau: string; khai_thac: string; gia_tri: string; chot: string };
 type PD = { loai: string; ten: string; noi_dung: string; cau_tra_loi_chuan: string };
@@ -22,8 +22,14 @@ export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBa
   const [giongNoi, setGiongNoi] = useState(false);
   const [dangNghe, setDangNghe] = useState(false);
   const [hoTroNghe, setHoTroNghe] = useState(false);
+  const [cheDoGoi, setCheDoGoi] = useState(false);           // «Gọi bằng giọng»: tự nghe → tự gửi → khách nói → nghe tiếp
+  const [trangThaiGoi, setTrangThaiGoi] = useState<"nghe" | "nghi" | "khach_noi" | "tat">("tat");
+  const [chGiong, setChGiong] = useState<CauHinhGiongClient | null>(null);
+  const boNghe = useRef<BoNghe | null>(null);
+  const henGui = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tinRef = useRef(""); 
   const nhanDang = useRef<{ stop(): void } | null>(null);
-  useEffect(() => { const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }; setHoTroNghe(!!(w.SpeechRecognition || w.webkitSpeechRecognition)); try { setGiongNoi(localStorage.getItem("st_giong_noi") === "1"); } catch { /* bỏ qua */ } }, []);
+  useEffect(() => { const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }; setHoTroNghe(!!(w.SpeechRecognition || w.webkitSpeechRecognition)); try { setGiongNoi(localStorage.getItem("st_giong_noi") === "1"); } catch { /* bỏ qua */ } cauHinhGiong().then(setChGiong); }, []);
   const [giongs, setGiongs] = useState<GiongNoi[]>([]);
   const [giong, setGiong] = useState<string | null>(null);
   const [tocDo, setTocDo] = useState(1);
@@ -34,7 +40,40 @@ export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBa
     nap(); speechSynthesis.addEventListener?.("voiceschanged", nap); setTocDo(tocDoDaChon());
     return () => speechSynthesis.removeEventListener?.("voiceschanged", nap);
   }, []);
-  function docKhach(text: string) { if (giongNoi) docVanBan(text, { giong, tocDo }); }
+  function docKhach(text: string, saoXong?: () => void) {
+    if (!giongNoi && !cheDoGoi) { saoXong?.(); return; }
+    setTrangThaiGoi("khach_noi");
+    docTuDong(text, { giong, tocDo, onXong: () => { setTrangThaiGoi((t) => (t === "khach_noi" ? "nghe" : t)); saoXong?.(); } });
+  }
+  // ---- Chế độ gọi bằng giọng ----
+  async function batCheDoGoi() {
+    setLoi("");
+    try {
+      const { bo, nha } = await batNgheHopNhat({
+        onTam: (t) => { tinRef.current = t; setTin(t); },
+        onXong: (t) => { tinRef.current = (tinRef.current && !t.startsWith(tinRef.current) ? tinRef.current + " " : "") ; setTin(t); if (henGui.current) clearTimeout(henGui.current); henGui.current = setTimeout(() => guiGiong(t), 900); },
+        onBatDauNoi: () => { dungDoc(); setTrangThaiGoi("nghe"); },
+        onLoi: (m) => setLoi(m),
+      });
+      boNghe.current = bo; setCheDoGoi(true); setGiongNoi(true); setTrangThaiGoi("nghe");
+      setLoi(nha === "trinh_duyet" && chGiong?.stt === "azure" ? "Azure STT không khả dụng, đang dùng trình duyệt." : "");
+    } catch (e) { setLoi((e as Error).message); }
+  }
+  function tatCheDoGoi() { boNghe.current?.dung(); boNghe.current = null; if (henGui.current) clearTimeout(henGui.current); setCheDoGoi(false); setTrangThaiGoi("tat"); dungDoc(); }
+  async function guiGiong(t: string) {
+    const text = t.trim(); if (!text || dangGui) return;
+    setTrangThaiGoi("nghi"); setTin(""); tinRef.current = "";
+    setDangGui(true); setLoi("");
+    setLichSu((ls) => [...ls, { vai: "sale", noi_dung: text, luc: new Date().toISOString() }]);
+    try {
+      const r = await fetch(`/api/luyen-tap/${phienId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hanh_dong: "luot", tin_nhan: text }) });
+      const j = (await r.json()) as { khach?: LuotKhach; lichSu?: LuotHoiThoai[]; loi?: string };
+      if (!r.ok || !j.khach) throw new Error(j.loi || "Lỗi gửi");
+      setLichSu(j.lichSu!); setKhachCuoi(j.khach); docKhach(j.khach.noi_dung);
+    } catch (e) { setLoi((e as Error).message); setLichSu((ls) => ls.slice(0, -1)); setTrangThaiGoi("nghe"); }
+    finally { setDangGui(false); }
+  }
+  useEffect(() => () => { boNghe.current?.dung(); dungDoc(); }, []);
   function batNghe() {
     const w = window as unknown as { SpeechRecognition?: new () => { lang: string; interimResults: boolean; continuous: boolean; start(): void; stop(): void; onresult: ((e: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null }; webkitSpeechRecognition?: never };
     const C = w.SpeechRecognition || (w as { webkitSpeechRecognition?: typeof w.SpeechRecognition }).webkitSpeechRecognition; if (!C) return;
@@ -97,10 +136,11 @@ export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBa
       </aside>
       <section className="the flex flex-col order-1 lg:order-2" style={{ minHeight: 560 }}>
         <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--vien)" }}>
-          <div className="flex items-center gap-3"><span className="w-2.5 h-2.5 rounded-full" style={{ background: dangGui ? "var(--vang)" : "var(--xanh)", boxShadow: "0 0 0 4px " + (dangGui ? "var(--vang-mo)" : "var(--xanh-mo)") }} /><span className="font-semibold tabular">{mm}:{ss}</span><span className="text-xs" style={{ color: "var(--chu-mo)" }}>{dangGui ? "Khách đang trả lời…" : "Đang gọi"}</span></div>
+          <div className="flex items-center gap-3"><span className="w-2.5 h-2.5 rounded-full" style={{ background: dangGui || trangThaiGoi === "nghi" ? "var(--vang)" : trangThaiGoi === "khach_noi" ? "var(--tim)" : "var(--xanh)", boxShadow: "0 0 0 4px " + (dangGui ? "var(--vang-mo)" : trangThaiGoi === "khach_noi" ? "var(--tim-mo)" : "var(--xanh-mo)") }} /><span className="font-semibold tabular">{mm}:{ss}</span><span className="text-xs" style={{ color: "var(--chu-mo)" }}>{dangGui || trangThaiGoi === "nghi" ? "Khách đang suy nghĩ…" : trangThaiGoi === "khach_noi" ? "Khách đang nói (nói chen để ngắt)" : cheDoGoi ? "🎙 Đang nghe bạn — nói xong ngừng 1 giây là gửi" : "Đang gọi"}</span>{chGiong && chGiong.tts !== "trinh_duyet" && <span className="nhan nhan-ngoc">{chGiong.tts === "elevenlabs" ? "ElevenLabs" : "Azure"} giọng</span>}</div>
           <div className="flex items-center gap-2 text-xs" style={{ color: "var(--chu-mo)" }}>{khachCuoi && <span className={`nhan ${khachCuoi.cam_xuc === "tich_cuc" ? "nhan-xanh" : khachCuoi.cam_xuc === "tieu_cuc" ? "nhan-do" : "nhan-xam"}`}>Sẵn sàng chốt {khachCuoi.san_sang_chot}%</span>}<span>{soLuotSale} lượt</span>
             <button type="button" className={`nut nut-nho ${giongNoi ? "nut-chinh" : ""}`} title="Khách nói thành tiếng" onClick={() => { const m = !giongNoi; setGiongNoi(m); try { localStorage.setItem("st_giong_noi", m ? "1" : "0"); } catch { /* bỏ qua */ } if (!m) dungDoc(); }}>🔊 {giongNoi ? "Loa bật" : "Loa tắt"}</button>
-            <button type="button" className="nut nut-nho" title="Chọn giọng đọc" onClick={() => setMoCaiDat((x) => !x)}>Giọng</button></div>
+            <button type="button" className="nut nut-nho" title="Chọn giọng đọc" onClick={() => setMoCaiDat((x) => !x)}>Giọng</button>
+            {cuaToi && !khachCuoi?.ket_thuc && (cheDoGoi ? <button type="button" className="nut nut-nho nut-nguy" onClick={tatCheDoGoi}>⏹ Tắt gọi bằng giọng</button> : <button type="button" className="nut nut-nho nut-chinh" onClick={batCheDoGoi} title="Nói vào mic, khách trả lời bằng giọng, không cần gõ">📞 Gọi bằng giọng</button>)}</div>
         </div>
         {moCaiDat && (
           <div className="px-4 py-3 border-b flex flex-wrap items-center gap-2 text-xs" style={{ borderColor: "var(--vien)", background: "var(--the-2)" }}>
@@ -108,7 +148,7 @@ export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBa
             <select className="o-nhap w-64 py-1" value={giong ?? ""} onChange={(e) => { setGiong(e.target.value); luuGiong(e.target.value); }}>{giongs.length === 0 && <option value="">(Trình duyệt chưa có giọng tiếng Việt)</option>}{giongs.map((g) => <option key={g.name} value={g.name}>{g.name}{g.diem >= 10 ? " ★ tự nhiên" : ""}</option>)}</select>
             <label className="flex items-center gap-1">Tốc độ <input type="range" min={0.8} max={1.3} step={0.05} value={tocDo} onChange={(e) => { const v = Number(e.target.value); setTocDo(v); luuTocDo(v); }} /> {tocDo.toFixed(2)}</label>
             <button type="button" className="nut nut-nho" onClick={() => docVanBan(`Chào bạn, mình là ${persona.ten}. Mình đang tìm giải pháp cho ${persona.cong_ty}, bạn tư vấn giúp mình nhé.`, { giong, tocDo })}>Nghe thử</button>
-            <span style={{ color: "var(--chu-nhat)" }}>Giọng tự nhiên nhất: Microsoft Edge (HoaiMy / NamMinh Natural). Chrome: «Google Tiếng Việt». macOS: «Linh».</span>
+            <span style={{ color: "var(--chu-nhat)" }}>{chGiong && chGiong.tts !== "trinh_duyet" ? `Workspace đang dùng giọng ${chGiong.tts === "elevenlabs" ? "ElevenLabs" : "Azure"} (đám mây); lựa chọn ở đây chỉ dùng khi đám mây lỗi.` : <>Giọng trình duyệt là giọng máy. Muốn giọng thật tự nhiên: quản lý vào <a href="/cai-dat/giong-noi" style={{ color: "var(--nhan-sang)" }}>Cài đặt → Giọng nói AI</a> kết nối ElevenLabs hoặc Azure.</>}</span>
           </div>)}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3" style={{ maxHeight: 520 }}>
           {lichSu.length === 0 && <div className="text-center text-sm py-8" style={{ color: "var(--chu-mo)" }}>Khách vừa nghe máy. Hãy mở lời trước — giới thiệu ngắn và đặt một câu hỏi mở.</div>}
@@ -120,7 +160,7 @@ export function ManHinhLuyenTap({ phienId, persona, lichSuBanDau, cuaToi, kichBa
         {loi && <div className="mx-4 mb-2 text-xs px-3 py-2 rounded-lg" style={{ background: "var(--do-mo)", color: "var(--chu-do)" }}>{loi}</div>}
         {cuaToi ? (
           <div className="p-3 border-t flex flex-col gap-2" style={{ borderColor: "var(--vien)" }}>
-            <textarea ref={oRef} className="o-nhap" rows={2} placeholder="Nói với khách… (Enter để gửi, Shift+Enter xuống dòng)" value={tin} onChange={(e) => setTin(e.target.value)} disabled={dangGui || dangCham || !!khachCuoi?.ket_thuc}
+            <textarea ref={oRef} className="o-nhap" rows={2} placeholder={cheDoGoi ? "Đang nghe micro… (vẫn có thể gõ)" : "Nói với khách… (Enter để gửi, Shift+Enter xuống dòng)"} value={tin} onChange={(e) => setTin(e.target.value)} disabled={dangGui || dangCham || !!khachCuoi?.ket_thuc}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); gui(); } }} autoFocus />
             <div className="flex flex-wrap gap-2 justify-between">
               <div className="flex gap-2"><button type="button" className="nut nut-nho" onClick={huy} disabled={dangCham}>Hủy phiên</button>{hoTroNghe && <button type="button" className={`nut nut-nho ${dangNghe ? "nut-nguy" : ""}`} onClick={batNghe} disabled={dangGui || dangCham || !!khachCuoi?.ket_thuc} title="Nói thay vì gõ (Chrome/Edge)">🎙 {dangNghe ? "Đang nghe… bấm để dừng" : "Nói"}</button>}</div>

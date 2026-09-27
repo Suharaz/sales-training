@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { KhungShell } from "@/components/KhungShell";
 import { ThongBaoAI } from "@/components/ThongBaoAI";
 import { FormKichBanDisc } from "@/components/FormKichBanDisc";
+import { NutSinhDisc } from "@/components/NutSinhDisc";
 import { nguCanhTrang } from "@/services/trang";
 import { danhSachSanPham } from "@/services/kich-ban";
-import { layBoKichBan, tongQuanDisc, sinhKichBanDisc, luuKichBanDisc, doiTrangThaiDisc } from "@/services/disc";
+import { layBoKichBan, tongQuanDisc, luuKichBanDisc, doiTrangThaiDisc } from "@/services/disc";
 import { cheDoAI } from "@/services/ai-gateway";
 import { DISC, NHOM_DISC, laNhomDisc, type NhomDisc, type KichBanDisc } from "@/core/disc";
 export const dynamic = "force-dynamic";
@@ -20,15 +21,6 @@ export default async function TrangDisc({ searchParams }: { searchParams: Promis
   const bo = spId ? await ws((q) => layBoKichBan(q, spId)) : { D: null, I: null, S: null, C: null };
   const quanLy = phien.vaiTro === "quan_ly";
   const ve = (n: string = nhom, them = "") => `/kich-ban/disc?san_pham=${spId}&nhom=${n}${them}`;
-  async function sinh(form: FormData) {
-    "use server";
-    const { phien, ws } = await nguCanhTrang(); if (phien.vaiTro !== "quan_ly") return;
-    const spX = String(form.get("san_pham_id")); const nhomX = String(form.get("nhom"));
-    const ds = nhomX === "tat_ca" ? [...NHOM_DISC] : laNhomDisc(nhomX) ? [nhomX] : [];
-    try { for (const n of ds) await ws((q) => sinhKichBanDisc(q, { workspaceId: phien.workspaceId, nguoiDungId: phien.nguoiDungId, sanPhamId: spX, nhom: n })); }
-    catch (e) { redirect(`/kich-ban/disc?san_pham=${spX}&nhom=${ds[0] ?? "D"}&loi=${encodeURIComponent((e as Error).message)}`); }
-    revalidatePath("/kich-ban/disc"); redirect(`/kich-ban/disc?san_pham=${spX}&nhom=${ds[0] ?? "D"}&ok=${ds.length}`);
-  }
   async function luu(form: FormData) {
     "use server";
     const { phien, ws } = await nguCanhTrang(); if (phien.vaiTro !== "quan_ly") return;
@@ -50,7 +42,7 @@ export default async function TrangDisc({ searchParams }: { searchParams: Promis
       {ok && <div className="thong-bao thong-bao-xanh mb-3">AI đã sinh {ok} kịch bản (trạng thái nháp). Đọc, sửa rồi bấm Duyệt.</div>}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <form className="flex items-center gap-2"><input type="hidden" name="nhom" value={nhom} /><select name="san_pham" className="o-nhap w-72" defaultValue={spId}>{sp.map((s) => <option key={s.id} value={s.id}>{s.ten}</option>)}</select><button className="nut nut-nho">Chọn sản phẩm</button></form>
-        {quanLy && spId && <form action={sinh}><input type="hidden" name="san_pham_id" value={spId} /><input type="hidden" name="nhom" value="tat_ca" /><button className="nut nut-chinh">AI sinh trọn bộ 4 nhóm</button></form>}
+        {quanLy && spId && <NutSinhDisc sanPhamId={spId} nhom="tat_ca" />}
         <span className="text-xs" style={{ color: "var(--chu-mo)" }}>{tq.map((t) => `${t.ten}: ${t.so_duyet} duyệt / ${t.so_nhap} nháp`).join(" · ")}</span>
       </div>
       <div className="flex gap-1 mb-4 flex-wrap">{NHOM_DISC.map((n) => <Link key={n} href={ve(n)} className={`nut ${n === nhom ? "nut-chinh" : ""}`} style={n !== nhom ? { borderColor: DISC[n].mau } : undefined}>{DISC[n].ten}{bo[n] ? <span className={`nhan ${bo[n]!.trang_thai === "da_duyet" ? "nhan-xanh" : "nhan-vang"} ml-1`}>{bo[n]!.trang_thai === "da_duyet" ? "đã duyệt" : "nháp"}</span> : <span className="nhan nhan-xam ml-1">chưa có</span>}</Link>)}</div>
@@ -66,13 +58,13 @@ export default async function TrangDisc({ searchParams }: { searchParams: Promis
         <div className="flex flex-col gap-3">
           {!spId ? <div className="the p-8 mo-ta text-center">Chưa có sản phẩm. Thêm ở trang Sản phẩm.</div> : !kb ? (
             <div className="the p-8 text-center"><div className="font-semibold text-lg">Chưa có kịch bản nhóm {nhom} cho sản phẩm này</div><div className="mo-ta mt-1">AI sẽ viết mở đầu, câu hỏi khai thác, trình bày giá trị, 3 phản đối điển hình, câu chốt, theo dõi và từ nên dùng/tránh, bám DNA và hồ sơ sản phẩm.</div>
-              {quanLy && <form action={sinh} className="mt-4 flex gap-2 justify-center"><input type="hidden" name="san_pham_id" value={spId} /><input type="hidden" name="nhom" value={nhom} /><button className="nut nut-chinh">AI sinh kịch bản nhóm {nhom}</button></form>}</div>
+              {quanLy && <div className="mt-4 flex justify-center"><NutSinhDisc sanPhamId={spId} nhom={nhom} /></div>}</div>
           ) : (
             <>
               <div className="the p-3 flex flex-wrap items-center gap-2 text-xs" style={{ color: "var(--chu-mo)" }}>
                 <span className={`nhan ${kb.trang_thai === "da_duyet" ? "nhan-xanh" : "nhan-vang"}`}>{kb.trang_thai === "da_duyet" ? "Đã duyệt — đang dùng cho AI" : "Nháp — chưa dùng cho AI"}</span>
                 <span>Nguồn: {kb.che_do_ai === "seed" ? "mẫu" : kb.che_do_ai === "du_phong" ? "dự phòng theo luật" : kb.che_do_ai ? "Claude" : "nhập tay"}{kb.phien_ban_dna ? ` · DNA v${kb.phien_ban_dna}` : ""}</span>
-                {quanLy && <span className="ml-auto flex gap-1"><form action={sinh}><input type="hidden" name="san_pham_id" value={spId} /><input type="hidden" name="nhom" value={nhom} /><button className="nut nut-nho">AI sinh lại nhóm {nhom}</button></form>{kb.trang_thai === "da_duyet" && <form action={boDuyet}><input type="hidden" name="san_pham_id" value={spId} /><input type="hidden" name="nhom" value={nhom} /><button className="nut nut-nho">Bỏ duyệt</button></form>}</span>}
+                {quanLy && <span className="ml-auto flex gap-1 items-center"><NutSinhDisc sanPhamId={spId} nhom={nhom} nho />{kb.trang_thai === "da_duyet" && <form action={boDuyet}><input type="hidden" name="san_pham_id" value={spId} /><input type="hidden" name="nhom" value={nhom} /><button className="nut nut-nho">Bỏ duyệt</button></form>}</span>}
               </div>
               <FormKichBanDisc action={luu} sanPhamId={spId} nhom={nhom} kb={kb.noi_dung} chiXem={!quanLy} daDuyet={kb.trang_thai === "da_duyet"} />
             </>)}

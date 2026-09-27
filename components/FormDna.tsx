@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { NoiDungDna } from "@/core/dna";
+import { NutCho } from "./NutCho";
 type Dna = NoiDungDna & { id: string | null };
 export function FormDna({ action, dna, chiXem }: { action: (f: FormData) => void; dna: Dna; chiXem: boolean }) {
   const [d, setD] = useState<NoiDungDna>(dna);
@@ -43,7 +44,7 @@ export function FormDna({ action, dna, chiXem }: { action: (f: FormData) => void
         <label className="flex flex-col gap-1">Đối thủ và cách nói về họ<textarea {...s("doi_thu")} rows={3} placeholder="Đối thủ A rẻ hơn nhưng không có coach; không nói xấu, so sánh bằng giá trị" /></label>
         <label className="flex flex-col gap-1">Chính sách (bảo hành, hoàn tiền, thanh toán)<textarea {...s("chinh_sach")} rows={3} /></label>
         <label className="flex flex-col gap-1 md:col-span-2">Câu chuyện thương hiệu (tùy chọn)<textarea {...s("cau_chuyen")} rows={3} /></label>
-        {!chiXem && <div className="md:col-span-2"><button className="nut nut-chinh">Lưu DNA</button></div>}
+        {!chiXem && <div className="md:col-span-2"><NutCho dangLam="Đang lưu…">Lưu DNA</NutCho></div>}
       </div>
     </form>
   );
