@@ -5,6 +5,7 @@ import { TheKpi } from "@/components/TheKpi";
 import { Icon } from "@/components/Icon";
 import { nguCanhTrang, dinhDangNgay } from "@/services/trang";
 import { danhSachCuocGoi, TEN_KET_QUA } from "@/services/cuoc-goi";
+import { DISC } from "@/core/disc";
 export const dynamic = "force-dynamic";
 export default async function TrangCuocGoi({ searchParams }: { searchParams: Promise<{ ket_qua?: string; sale?: string; q?: string }> }) {
   const { phien, ws } = await nguCanhTrang();
@@ -34,13 +35,14 @@ export default async function TrangCuocGoi({ searchParams }: { searchParams: Pro
       </form>
       {ds.length === 0 ? <div className="the p-10 text-center"><div className="text-lg font-semibold">Chưa có cuộc gọi</div><div className="mo-ta mt-1">Dán transcript (mỗi dòng «Tên: nội dung») để AI phân tích.</div><Link href="/cuoc-goi/moi" className="nut nut-chinh mt-4">Nạp cuộc gọi đầu tiên</Link></div> : (
         <div className="the overflow-x-auto"><table className="bang">
-          <thead><tr>{phien.vaiTro === "quan_ly" && <th>Sale</th>}<th>Khách</th><th>Sản phẩm</th><th>Lúc gọi</th><th>Thời lượng</th><th>Kết quả</th><th>Điểm AI</th><th>Phản đối</th><th></th></tr></thead>
+          <thead><tr>{phien.vaiTro === "quan_ly" && <th>Sale</th>}<th>Khách</th><th>Sản phẩm</th><th>Lúc gọi</th><th>Thời lượng</th><th>Kết quả</th><th>Điểm AI</th><th>DISC</th><th>Phản đối</th><th></th></tr></thead>
           <tbody>{ds.map((c) => (
             <tr key={c.id}>{phien.vaiTro === "quan_ly" && <td>{c.ten_sale}</td>}<td className="font-medium">{c.ten_khach || "—"}</td><td>{c.ten_san_pham ?? "—"}</td>
               <td className="text-xs" style={{ color: "var(--chu-mo)" }}>{dinhDangNgay(c.goi_luc, phien.muiGio)}</td>
               <td className="tabular">{c.thoi_luong_giay ? `${Math.floor(c.thoi_luong_giay / 60)}:${String(c.thoi_luong_giay % 60).padStart(2, "0")}` : "—"}</td>
               <td><span className={`nhan ${mau[c.ket_qua]}`}>{TEN_KET_QUA[c.ket_qua]}</span></td>
               <td>{c.trang_thai === "xong" ? <NhanDiem diem={c.diem_tong} nhoGon /> : <span className="nhan nhan-xam">{c.trang_thai === "cho" ? "Đang chờ" : "Lỗi"}</span>}</td>
+              <td>{c.disc ? <span className="nhan" style={{ background: DISC[c.disc].mau + "22", color: DISC[c.disc].mau }} title={`${c.disc_tin_cay ?? ""}%`}>{c.disc}</span> : "—"}</td>
               <td className="tabular">{c.phan_tich?.phan_doi_phat_hien.length ?? "—"}</td>
               <td><Link href={`/cuoc-goi/${c.id}`} className="nut nut-nho">Xem</Link></td></tr>))}</tbody>
         </table></div>)}

@@ -8,6 +8,7 @@ import { layDna, luuDna } from "@/services/dna";
 import { cheDoAI } from "@/services/ai-gateway";
 import { doDayDuDna, tomTatDna } from "@/core/dna";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 export default async function TrangDna({ searchParams }: { searchParams: Promise<{ loi?: string; ok?: string }> }) {
   const { phien, ws } = await nguCanhTrang();
   const { loi, ok } = await searchParams;

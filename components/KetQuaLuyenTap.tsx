@@ -5,6 +5,7 @@ import { VongDiem } from "./NhanDiem";
 import { ThongBaoAI } from "./ThongBaoAI";
 import { KY_NANG, TEN_KY_NANG, nhanXetDiem } from "@/core/khung-ky-nang";
 import { TEN_LOAI_PHAN_DOI } from "@/core/phan-doi";
+import { DISC } from "@/core/disc";
 export function KetQuaLuyenTapView({ phien }: { phien: PhienLuyenTap }) {
   const kq = phien.ket_qua!;
   return (
@@ -13,6 +14,7 @@ export function KetQuaLuyenTapView({ phien }: { phien: PhienLuyenTap }) {
         <VongDiem diem={phien.diem_tong ?? 0} size={110} />
         <div className="font-bold text-lg">{nhanXetDiem(phien.diem_tong ?? 0)}</div>
         <Radar lop={[{ ten: "Phiên này", diem: kq.diem, mau: "#3b82f6", dam: true }]} size={240} />
+        {phien.disc && <div className="the-2 p-3 w-full text-sm" style={{ borderColor: DISC[phien.disc].mau }}><div className="text-xs font-semibold" style={{ color: DISC[phien.disc].mau }}>Khách nhóm {DISC[phien.disc].ten}</div>{kq.phu_hop_disc ? <><div className="flex items-baseline gap-2 mt-1"><span className="text-2xl font-bold tabular">{kq.phu_hop_disc.diem}</span><span className="text-xs" style={{ color: "var(--chu-mo)" }}>/100 nói đúng kiểu khách</span></div><div className="text-[13px] mt-1">{kq.phu_hop_disc.nhan_xet}</div></> : <div className="text-xs mt-1" style={{ color: "var(--chu-mo)" }}>{DISC[phien.disc].kieu_chot}</div>}</div>}
         <ThongBaoAI cheDo={phien.che_do_ai} />
         <Link href={`/luyen-tap/moi${kq.phan_doi_da_gap.find((p) => !p.xu_ly_tot) ? `?phan_doi=${kq.phan_doi_da_gap.find((p) => !p.xu_ly_tot)!.loai}` : ""}`} className="nut nut-chinh w-full justify-center">Luyện lại</Link>
       </div>

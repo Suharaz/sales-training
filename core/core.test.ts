@@ -220,3 +220,15 @@ describe("DNA doanh nghiệp", () => {
     expect(timTuCam("Bên em có coach", d.tu_cam)).toEqual([]);
   });
 });
+
+describe("DISC", () => {
+  it("đoán nhóm từ lời khách; quá ngắn → null", async () => {
+    const { doanDisc, tomTatDisc, DISC, NHOM_DISC } = await import("./disc");
+    expect(doanDisc(["ok"])).toBeNull();
+    expect(doanDisc(["Nói thẳng đi, kết quả là gì, bao lâu thì thấy doanh số tăng? Tôi cần ngắn gọn."])?.nhom).toBe("D");
+    expect(doanDisc(["Hay quá, mọi người xung quanh tôi cũng thích cái này, nhiều người đang dùng đúng không, cộng đồng có vui không?"])?.nhom).toBe("I");
+    expect(doanDisc(["Đội tôi đang dùng quen cách cũ rồi, có khó không, có ai hỗ trợ từ từ không, tôi hơi lo thay đổi."])?.nhom).toBe("S");
+    expect(doanDisc(["Tại sao lại như vậy? Dựa trên số liệu nào? Cho tôi tài liệu so sánh chi tiết và điều khoản hợp đồng."])?.nhom).toBe("C");
+    for (const n of NHOM_DISC) { expect(tomTatDisc(n)).toContain(DISC[n].ten); expect(DISC[n].phan_doi_dien_hinh.length).toBeGreaterThanOrEqual(3); }
+  });
+});

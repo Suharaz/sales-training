@@ -7,12 +7,14 @@ import { ketQuaLuyenTapSchema, luotKhachSchema, personaSchema, TEN_DO_KHO, type 
 import { chamLuyenTapMau, khachTraLoiMau, sinhPersonaMau } from "@/core/du-phong-ai";
 import { goiAI } from "./ai-gateway";
 import { danhSachSanPham, moTaSanPhamChoAI } from "./kich-ban";
+import { DISC, NHOM_DISC, laNhomDisc, tomTatDisc, type NhomDisc } from "@/core/disc";
+import { kichBanDiscChoAI } from "./disc";
 import { congDiem } from "./diem";
 import { ghiKiemToan, ghiSuKien } from "./nhat-ky";
 
-export type PhienLuyenTap = { id: string; nguoi_dung_id: string; ten_sale: string; san_pham_id: string | null; ten_san_pham: string | null; do_kho: DoKho; persona: Persona; lich_su: LuotHoiThoai[]; trang_thai: "dang" | "xong" | "huy"; ket_qua: KetQuaLuyenTap | null; diem_tong: number | null; che_do_ai: string | null; tao_luc: string; ket_thuc_luc: string | null };
+export type PhienLuyenTap = { id: string; nguoi_dung_id: string; ten_sale: string; san_pham_id: string | null; ten_san_pham: string | null; do_kho: DoKho; disc: NhomDisc | null; persona: Persona; lich_su: LuotHoiThoai[]; trang_thai: "dang" | "xong" | "huy"; ket_qua: KetQuaLuyenTap | null; diem_tong: number | null; che_do_ai: string | null; tao_luc: string; ket_thuc_luc: string | null };
 
-const SELECT = `select p.id, p.nguoi_dung_id, n.ten as ten_sale, p.san_pham_id, s.ten as ten_san_pham, p.do_kho, p.persona, p.lich_su, p.trang_thai, p.ket_qua, p.diem_tong, p.che_do_ai, p.tao_luc::text, p.ket_thuc_luc::text
+const SELECT = `select p.id, p.nguoi_dung_id, n.ten as ten_sale, p.san_pham_id, s.ten as ten_san_pham, p.do_kho, p.disc, p.persona, p.lich_su, p.trang_thai, p.ket_qua, p.diem_tong, p.che_do_ai, p.tao_luc::text, p.ket_thuc_luc::text
   from phien_luyen_tap p join nguoi_dung n on n.id = p.nguoi_dung_id left join san_pham s on s.id = p.san_pham_id`;
 
 export async function danhSachPhien(q: Truy, o: { nguoiDungId?: string; gioiHan?: number }): Promise<PhienLuyenTap[]> {
@@ -28,21 +30,24 @@ async function nguCanhSanPham(q: Truy, sanPhamId: string | null): Promise<string
   return sp ? moTaSanPhamChoAI(sp) : "";
 }
 
-export async function taoPhien(q: Truy, o: { workspaceId: string; nguoiDungId: string; sanPhamId: string | null; doKho: DoKho; phanDoiUuTien: LoaiPhanDoi[] }): Promise<{ id: string; cheDo: string }> {
+export async function taoPhien(q: Truy, o: { workspaceId: string; nguoiDungId: string; sanPhamId: string | null; doKho: DoKho; phanDoiUuTien: LoaiPhanDoi[]; disc?: string | null }): Promise<{ id: string; cheDo: string }> {
   const sp = await nguCanhSanPham(q, o.sanPhamId);
   const so = o.doKho === "de" ? 1 : o.doKho === "vua" ? 2 : 3;
   const hat = Math.floor(Math.random() * 1000);
+  const disc: NhomDisc = laNhomDisc(o.disc) ? o.disc : NHOM_DISC[hat % 4];
   const kq = await goiAI({
     workspaceId: o.workspaceId, tacVu: "sinh_persona", schema: personaSchema,
     prompt: `Hãy tạo MỘT khách hàng tiềm năng giả lập (persona) cho buổi luyện tập bán hàng qua điện thoại.
 ${sp}
 Độ khó: ${TEN_DO_KHO[o.doKho]}. Khách phải có đúng ${so} phản đối chính${o.phanDoiUuTien.length ? `, ưu tiên các loại: ${o.phanDoiUuTien.map((l) => TEN_LOAI_PHAN_DOI[l]).join(", ")}` : ""}.
-Mã loại phản đối hợp lệ: gia, thoi_gian, niem_tin, nhu_cau, quyet_dinh, doi_thu. Persona phải là doanh nghiệp/cá nhân Việt Nam thực tế, hạt ngẫu nhiên ${hat}.`,
-    cauTrucJson: `{"ten":"string","chuc_danh":"string","cong_ty":"string","boi_canh":"string (2 câu)","muc_tieu":"string","noi_dau":"string","ngan_sach":"string","tinh_cach":"string","phan_doi_chinh":["gia"]}`,
-    duPhong: () => sinhPersonaMau(o.doKho, hat, o.phanDoiUuTien),
+Mã loại phản đối hợp lệ: gia, thoi_gian, niem_tin, nhu_cau, quyet_dinh, doi_thu. Persona phải là doanh nghiệp/cá nhân Việt Nam thực tế, hạt ngẫu nhiên ${hat}.
+TÍNH CÁCH DISC của khách: ${tomTatDisc(disc)} → trường tinh_cach phải mô tả đúng nhóm này (cách nói, tốc độ, điều họ quan tâm), disc = "${disc}".`,
+    cauTrucJson: `{"ten":"string","chuc_danh":"string","cong_ty":"string","boi_canh":"string (2 câu)","muc_tieu":"string","noi_dau":"string","ngan_sach":"string","tinh_cach":"string","phan_doi_chinh":["gia"],"disc":"${disc}"}`,
+    duPhong: () => ({ ...sinhPersonaMau(o.doKho, hat, o.phanDoiUuTien), disc, tinh_cach: DISC[disc].mo_ta }),
   });
-  const r = await q.query<{ id: string }>("insert into phien_luyen_tap(workspace_id, nguoi_dung_id, san_pham_id, do_kho, persona, che_do_ai) values ($1,$2,$3,$4,$5,$6) returning id",
-    [o.workspaceId, o.nguoiDungId, o.sanPhamId, o.doKho, JSON.stringify(kq.duLieu), kq.cheDo]);
+  kq.duLieu.disc = disc;
+  const r = await q.query<{ id: string }>("insert into phien_luyen_tap(workspace_id, nguoi_dung_id, san_pham_id, do_kho, persona, che_do_ai, disc) values ($1,$2,$3,$4,$5,$6,$7) returning id",
+    [o.workspaceId, o.nguoiDungId, o.sanPhamId, o.doKho, JSON.stringify(kq.duLieu), kq.cheDo, disc]);
   await ghiSuKien(q, { workspaceId: o.workspaceId, loai: "roleplay_started", nguoiDungId: o.nguoiDungId, payload: { phien_id: r.rows[0].id, do_kho: o.doKho } });
   return { id: r.rows[0].id, cheDo: kq.cheDo };
 }
@@ -64,6 +69,7 @@ export async function guiLuot(q: Truy, o: { workspaceId: string; phienId: string
     workspaceId: o.workspaceId, tacVu: "khach_tra_loi", schema: luotKhachSchema, timeoutMs: 90_000,
     prompt: `Bạn ĐÓNG VAI KHÁCH HÀNG trong buổi luyện tập bán hàng. Tuyệt đối không đóng vai sale, không nhận xét, không dạy.
 HỒ SƠ KHÁCH (bạn): ${JSON.stringify(p.persona)}
+${p.disc ? `TÍNH CÁCH DISC (diễn đúng nhịp và mối quan tâm của nhóm này): ${tomTatDisc(p.disc)}` : ""}
 ${sp}
 Quy tắc diễn: nói tự nhiên như người Việt qua điện thoại, 1–3 câu mỗi lượt. Lần lượt nêu các phản đối trong phan_doi_chinh khi hợp ngữ cảnh; nếu sale trả lời hời hợt (không ghi nhận, không có bằng chứng/giá trị) thì giữ nguyên phản đối và đẩy lại. Nếu sale xử lý tốt tất cả phản đối và đề xuất bước tiếp theo rõ ràng thì đồng ý và đặt ket_thuc=true. Sau lượt sale thứ 10 thì kết thúc dù thế nào (ket_thuc=true, nêu lý do ngắn).
 LỊCH SỬ:
@@ -95,10 +101,11 @@ Tuân thủ: trừ nặng nếu sale hứa kết quả chắc chắn, bịa số
 KHO PHẢN ĐỐI CHUẨN của doanh nghiệp (dùng để so sánh cách sale xử lý):
 ${kho.map((k) => `- [${k.loai}] ${k.noi_dung} → chuẩn: ${k.cau_tra_loi_chuan}`).join("\n") || "(chưa có)"}
 HỒ SƠ KHÁCH: ${JSON.stringify(p.persona)}
+${p.disc ? `KHÁCH THUỘC NHÓM DISC ${p.disc}: ${tomTatDisc(p.disc)}\n${await kichBanDiscChoAI(q, p.san_pham_id, p.disc)}\nChấm thêm phu_hop_disc (0–100): sale có nói đúng kiểu nhóm này không (nhịp, bằng chứng, kiểu chốt), kèm nhận xét 2 câu.` : ""}
 HỘI THOẠI:
 ${dungLichSu(p.lich_su)}
 Yêu cầu: nhan_xet_chung 3–4 câu; diem_manh 2–3 ý; can_cai_thien 2–3 ý cụ thể; goi_y_theo_luot chọn 2–4 lượt SALE yếu nhất (số lượt là số thứ tự trong hội thoại) kèm câu nói tốt hơn; phan_doi_da_gap liệt kê từng phản đối khách nêu và sale xử lý tốt hay chưa.`,
-    cauTrucJson: `{"diem":{"khai_thac":0,"lang_nghe":0,"gia_tri":0,"phan_doi":0,"chot":0,"tuan_thu":0},"nhan_xet_chung":"string","diem_manh":["string"],"can_cai_thien":["string"],"goi_y_theo_luot":[{"luot":1,"van_de":"string","cau_tot_hon":"string"}],"phan_doi_da_gap":[{"loai":"gia","xu_ly_tot":true,"ghi_chu":"string"}]}`,
+    cauTrucJson: `{"diem":{"khai_thac":0,"lang_nghe":0,"gia_tri":0,"phan_doi":0,"chot":0,"tuan_thu":0},"nhan_xet_chung":"string","diem_manh":["string"],"can_cai_thien":["string"],"goi_y_theo_luot":[{"luot":1,"van_de":"string","cau_tot_hon":"string"}],"phan_doi_da_gap":[{"loai":"gia","xu_ly_tot":true,"ghi_chu":"string"}]${p.disc ? ',"phu_hop_disc":{"diem":0,"nhan_xet":"string"}' : ""}}`,
     duPhong: () => chamLuyenTapMau(p.lich_su),
   });
   const ketQua = { ...kq.duLieu, diem: chuanHoaDiem(kq.duLieu.diem) };

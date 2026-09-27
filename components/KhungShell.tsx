@@ -14,6 +14,7 @@ export const MENU: MucMenu[] = [
   { href: "/dna", ten: "DNA doanh nghiệp", icon: "huan_luyen" },
   { href: "/san-pham", ten: "Sản phẩm", icon: "chung_chi" },
   { href: "/kich-ban", ten: "Kịch bản & Phản đối", icon: "kich_ban" },
+  { href: "/kich-ban/disc", ten: "Kịch bản DISC", icon: "nhan_vien" },
   { href: "/dao-tao", ten: "Đào tạo", icon: "dao_tao" },
   { href: "/nhiem-vu", ten: "Nhiệm vụ", icon: "nhiem_vu" },
   { href: "/bang-xep-hang", ten: "Bảng xếp hạng", icon: "cup" },
@@ -23,7 +24,7 @@ export const MENU: MucMenu[] = [
 ];
 
 export function KhungShell({ phien, duongDan, tieuDe, moTa, hanhDong, children }: { phien: Phien; duongDan: string; tieuDe: string; moTa?: string; hanhDong?: React.ReactNode; children: React.ReactNode }) {
-  const chon = (href: string) => (href === "/" ? duongDan === "/" : duongDan.startsWith(href));
+  const chon = (href: string) => (href === "/" ? duongDan === "/" : href === "/kich-ban" ? duongDan === "/kich-ban" : duongDan.startsWith(href));
   return (
     <div className="min-h-screen flex">
       <aside className="an-mobile w-[232px] shrink-0 border-r flex flex-col" style={{ background: "var(--nen-2)", borderColor: "var(--vien)" }}>

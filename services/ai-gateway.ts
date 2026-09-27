@@ -12,7 +12,7 @@ import { voiWorkspace } from "./workspace-guard";
 import { timTuCam } from "@/core/dna";
 
 export type CheDoAI = "cli" | "api" | "du_phong";
-export type TacVu = "sinh_persona" | "khach_tra_loi" | "cham_luyen_tap" | "phan_tich_cuoc_goi" | "goi_huan_luyen" | "goi_y_tra_loi" | "trich_dna" | "copilot";
+export type TacVu = "sinh_persona" | "khach_tra_loi" | "cham_luyen_tap" | "phan_tich_cuoc_goi" | "goi_huan_luyen" | "goi_y_tra_loi" | "trich_dna" | "copilot" | "sinh_kich_ban_disc";
 
 const g = globalThis as unknown as { __stCliOk?: boolean | null };
 

@@ -14,6 +14,7 @@ import { KY_NANG, TEN_KY_NANG, xepTheoDiem } from "@/core/khung-ky-nang";
 import { LOAI_PHAN_DOI, TEN_LOAI_PHAN_DOI } from "@/core/phan-doi";
 import { giaoNhiemVu } from "@/services/cuoc-goi";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 export default async function TrangHoSo({ params }: { params: Promise<{ id: string }> }) {
   const { id: idGoc } = await params;
   const { phien, ws } = await nguCanhTrang();

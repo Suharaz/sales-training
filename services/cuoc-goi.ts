@@ -6,13 +6,14 @@ import { phanTichCuocGoiSchema, type LuotHoiThoai, type PhanTichCuocGoi } from "
 import { phanTichCuocGoiMau, tachTranscript } from "@/core/du-phong-ai";
 import { goiAI } from "./ai-gateway";
 import { danhSachSanPham, moTaSanPhamChoAI } from "./kich-ban";
+import { NHOM_DISC, doanDisc, tomTatDisc, type NhomDisc } from "@/core/disc";
 import { congDiem } from "./diem";
 import { ghiKiemToan, ghiSuKien } from "./nhat-ky";
 
-export type CuocGoi = { id: string; nguoi_dung_id: string; ten_sale: string; san_pham_id: string | null; ten_san_pham: string | null; ten_khach: string; goi_luc: string; thoi_luong_giay: number | null; ket_qua: "thang" | "thua" | "hen" | "khac"; transcript: string; luot: LuotHoiThoai[]; phan_tich: PhanTichCuocGoi | null; diem_tong: number | null; trang_thai: "cho" | "xong" | "loi"; che_do_ai: string | null; loi: string | null; tao_luc: string };
+export type CuocGoi = { id: string; nguoi_dung_id: string; ten_sale: string; san_pham_id: string | null; ten_san_pham: string | null; ten_khach: string; disc: NhomDisc | null; disc_tin_cay: number | null; goi_luc: string; thoi_luong_giay: number | null; ket_qua: "thang" | "thua" | "hen" | "khac"; transcript: string; luot: LuotHoiThoai[]; phan_tich: PhanTichCuocGoi | null; diem_tong: number | null; trang_thai: "cho" | "xong" | "loi"; che_do_ai: string | null; loi: string | null; tao_luc: string };
 export const TEN_KET_QUA: Record<CuocGoi["ket_qua"], string> = { thang: "Thắng", thua: "Thua", hen: "Hẹn lại", khac: "Khác" };
 
-const SELECT = `select c.id, c.nguoi_dung_id, n.ten as ten_sale, c.san_pham_id, s.ten as ten_san_pham, c.ten_khach, c.goi_luc::text, c.thoi_luong_giay, c.ket_qua, c.transcript, c.luot, c.phan_tich, c.diem_tong, c.trang_thai, c.che_do_ai, c.loi, c.tao_luc::text
+const SELECT = `select c.id, c.nguoi_dung_id, n.ten as ten_sale, c.san_pham_id, s.ten as ten_san_pham, c.ten_khach, c.disc, c.disc_tin_cay, c.goi_luc::text, c.thoi_luong_giay, c.ket_qua, c.transcript, c.luot, c.phan_tich, c.diem_tong, c.trang_thai, c.che_do_ai, c.loi, c.tao_luc::text
   from cuoc_goi c join nguoi_dung n on n.id = c.nguoi_dung_id left join san_pham s on s.id = c.san_pham_id`;
 
 export async function danhSachCuocGoi(q: Truy, o: { nguoiDungId?: string; gioiHan?: number }): Promise<CuocGoi[]> {
@@ -52,15 +53,17 @@ ${KY_NANG.map((k) => `- ${k} (${TEN_KY_NANG[k]}): ${MO_TA_KY_NANG[k]}`).join("\n
 4) phan_doi_phat_hien: từng phản đối khách nêu (loai ∈ gia, thoi_gian, niem_tin, nhu_cau, quyet_dinh, doi_thu, khac), sale đã trả lời thế nào, và câu trả lời tốt hơn (bám kho chuẩn nếu có).
 5) doan_hay: các đoạn sale xử lý phản đối THỰC SỰ tốt (đáng đưa vào thư viện mẫu), trích nguyên văn, ẩn tên khách bằng «anh/chị».
 6) ty_le_sale_noi (% chữ của sale), so_cau_hoi_sale, cam_xuc_khach (-1..1), rui_ro_tuan_thu (câu hứa kết quả, bịa số, nói xấu đối thủ).
+7) disc: nhận diện nhóm tính cách DISC của KHÁCH qua cách nói (nhom D/I/S/C, tin_cay 0–100, ly_do 1–2 câu dẫn chứng từ transcript, goi_y_lan_sau: 2 câu sale nên đổi cách nói cho nhóm này). Không đủ dấu hiệu → null.
+Tham khảo: ${NHOM_DISC.map((n) => tomTatDisc(n).slice(0, 220)).join(" || ")}
 KHO PHẢN ĐỐI CHUẨN: ${kho.map((k) => `[${k.loai}] ${k.noi_dung} → ${k.cau_tra_loi_chuan}`).join(" | ") || "(chưa có)"}
 TRANSCRIPT:
 ${o.luot.map((l, i) => `${i + 1}. ${l.vai === "sale" ? "SALE" : "KHÁCH"}: ${l.noi_dung}`).join("\n")}`,
-    cauTrucJson: `{"tom_tat":{"nhu_cau":["string"],"phan_doi":["string"],"cam_ket":[{"noi_dung":"string","ben":"sale","han":"string|null"}],"buoc_tiep":"string"},"diem":{"khai_thac":0,"lang_nghe":0,"gia_tri":0,"phan_doi":0,"chot":0,"tuan_thu":0},"vi_du_theo_ky_nang":[{"ky_nang":"khai_thac","vi_du":"string"}],"phan_doi_phat_hien":[{"loai":"gia","noi_dung":"string","sale_tra_loi":"string","de_xuat_cau_tra_loi":"string"}],"doan_hay":[{"loai_phan_doi":"gia","trich_doan":"string"}],"ty_le_sale_noi":50,"so_cau_hoi_sale":0,"cam_xuc_khach":0,"rui_ro_tuan_thu":["string"]}`,
-    duPhong: () => phanTichCuocGoiMau(o.luot),
+    cauTrucJson: `{"tom_tat":{"nhu_cau":["string"],"phan_doi":["string"],"cam_ket":[{"noi_dung":"string","ben":"sale","han":"string|null"}],"buoc_tiep":"string"},"diem":{"khai_thac":0,"lang_nghe":0,"gia_tri":0,"phan_doi":0,"chot":0,"tuan_thu":0},"vi_du_theo_ky_nang":[{"ky_nang":"khai_thac","vi_du":"string"}],"phan_doi_phat_hien":[{"loai":"gia","noi_dung":"string","sale_tra_loi":"string","de_xuat_cau_tra_loi":"string"}],"doan_hay":[{"loai_phan_doi":"gia","trich_doan":"string"}],"ty_le_sale_noi":50,"so_cau_hoi_sale":0,"cam_xuc_khach":0,"rui_ro_tuan_thu":["string"],"disc":{"nhom":"D","tin_cay":0,"ly_do":"string","goi_y_lan_sau":"string"}}`,
+    duPhong: () => { const d = doanDisc(o.luot.filter((l) => l.vai === "khach").map((l) => l.noi_dung)); return { ...phanTichCuocGoiMau(o.luot), disc: d ? { nhom: d.nhom, tin_cay: d.tinCay, ly_do: "Đoán theo từ khóa (chế độ dự phòng).", goi_y_lan_sau: "" } : null }; },
   });
   const pt: PhanTichCuocGoi = { ...kq.duLieu, diem: chuanHoaDiem(kq.duLieu.diem) };
   const tong = diemTong(pt.diem);
-  await q.query("update cuoc_goi set phan_tich = $2, diem_tong = $3, trang_thai = 'xong', che_do_ai = $4, loi = $5 where id = $1", [o.cuocGoiId, JSON.stringify(pt), tong, kq.cheDo, kq.loi ?? null]);
+  await q.query("update cuoc_goi set phan_tich = $2, diem_tong = $3, trang_thai = 'xong', che_do_ai = $4, loi = $5, disc = $6, disc_tin_cay = $7 where id = $1", [o.cuocGoiId, JSON.stringify(pt), tong, kq.cheDo, kq.loi ?? null, pt.disc?.nhom ?? null, pt.disc?.tin_cay ?? null]);
   const cg = (await q.query<{ nguoi_dung_id: string }>("select nguoi_dung_id from cuoc_goi where id = $1", [o.cuocGoiId])).rows[0];
   // Phản đối mới → kho (trạng thái nháp, chờ quản lý duyệt — quy ước 4)
   let phanDoiMoi = 0;

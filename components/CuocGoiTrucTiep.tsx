@@ -8,6 +8,7 @@ import { Icon } from "./Icon";
 import { doanLoaiPhanDoi, TEN_LOAI_PHAN_DOI, type LoaiPhanDoi } from "@/core/phan-doi";
 import type { GoiYCopilot } from "@/core/ai-kieu";
 import { docVanBan, dungDoc } from "@/core/giong-noi";
+import { DISC, doanDisc } from "@/core/disc";
 type SR = { lang: string; continuous: boolean; interimResults: boolean; start(): void; stop(): void; abort(): void; onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null; onerror: ((e: { error: string }) => void) | null; onend: (() => void) | null };
 type Dong = { vai: "sale" | "khach"; text: string; luc: number };
 type PD = { loai: LoaiPhanDoi; noi_dung: string; cau_tra_loi_chuan: string };
@@ -97,6 +98,8 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
   const loaiTucThi = khachCuoi ? doanLoaiPhanDoi(khachCuoi.text) : "khac";
   const chuanTucThi = loaiTucThi !== "khac" ? khoPhanDoi.find((p) => p.loai === loaiTucThi) : undefined;
   const saleCuoi = [...dong].reverse().find((d) => d.vai === "sale");
+  const discTucThi = doanDisc(dong.filter((d) => d.vai === "khach").map((d) => d.text));
+  const discHien = goiY?.disc_doan ?? (discTucThi ? { nhom: discTucThi.nhom, tin_cay: discTucThi.tinCay, chinh_cach_noi: DISC[discTucThi.nhom].nen[0] } : null);
   const camTucThi = saleCuoi ? CAM.filter((r) => r.test(saleCuoi.text)).length > 0 : false;
   const kb = kichBan[spId] ?? null;
   const transcript = dong.map((d) => `${d.vai === "sale" ? tenSale : "Khách"}: ${d.text}`).join("\n");
@@ -151,6 +154,7 @@ export function CuocGoiTrucTiep({ sanPham, kichBan, khoPhanDoi, tenSale, cheDoAI
           <button type="button" className={`nut nut-nho ${tuDong ? "nut-chinh" : ""}`} onClick={() => setTuDong((x) => !x)} title="Tự gợi ý sau mỗi câu khách nói">Tự động {tuDong ? "bật" : "tắt"}</button>
           <button type="button" className={`nut nut-nho ${docGoiY ? "nut-chinh" : ""}`} onClick={() => { const m = !docGoiY; setDocGoiY(m); if (!m) dungDoc(); }} title="Đọc gợi ý vào tai nghe (đeo tai nghe để khách không nghe thấy)">🎧 Đọc gợi ý {docGoiY ? "bật" : "tắt"}</button>
         </div>
+        {discHien && <div className="the-2 p-2 text-xs flex items-start gap-2" style={{ borderColor: DISC[discHien.nhom].mau }}><span className="nhan" style={{ background: DISC[discHien.nhom].mau + "22", color: DISC[discHien.nhom].mau }}>{discHien.nhom}</span><div><b>Khách có vẻ nhóm {DISC[discHien.nhom].ten.split(" — ")[1]}</b> ({discHien.tin_cay}%). {discHien.chinh_cach_noi}</div></div>}
         {camTucThi && <div className="thong-bao thong-bao-do"><b>Cảnh báo tuân thủ:</b> câu vừa nói có cụm hứa kết quả / nói xấu đối thủ. Sửa ngay: nêu quy trình và bằng chứng được phép thay vì cam kết.</div>}
         {chuanTucThi && (
           <div className="the-2 p-3" style={{ borderColor: "var(--vang)" }}>

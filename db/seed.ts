@@ -5,6 +5,7 @@ import { bamMatKhau } from "../core/mat-khau";
 import { maChungChi } from "../core/chung-chi";
 import { chuanHoaDiem, diemTong } from "../core/khung-ky-nang";
 import { chamLuyenTapMau, phanTichCuocGoiMau, tachTranscript } from "../core/du-phong-ai";
+import { KB_DISC_MAU } from "./seed-disc";
 
 const MK_QL = "Demo@2026", MK_SALE = "Sale@2026";
 
@@ -85,6 +86,16 @@ export async function seed(): Promise<{ workspaceId: string; daCo: boolean }> {
           { hoi: "Sau khi trả lời phản đối cần làm gì?", luaChon: ["Im lặng", "Kiểm tra lại với khách", "Báo giá lại", "Kết thúc cuộc gọi"], dapAn: 1 },
         ]],
       ]],
+      ["Đọc vị khách theo DISC", [
+        ["4 nhóm tính cách DISC và cách nhận ra qua điện thoại", "noi_dung", "## Vì sao cần đọc vị\nCùng một câu nói, khách nhóm D thấy hay còn nhóm S thấy bị ép. Nhận ra nhóm trong 1–2 phút đầu giúp chọn đúng nhịp, đúng bằng chứng, đúng kiểu chốt.\n\n## D — Thống trị\n- Câu ngắn, hỏi thẳng «bao lâu», «kết quả là gì», hay ngắt lời.\n- Muốn: kết quả, tốc độ, quyền chọn. Sợ: mất thời gian, mất kiểm soát.\n\n## I — Ảnh hưởng\n- Nói nhiều, kể chuyện, hào hứng nhanh, quan tâm «ai đang dùng».\n- Muốn: được công nhận, trải nghiệm vui. Sợ: chi tiết khô khan, bị từ chối.\n\n## S — Ổn định\n- Nói chậm, nhẹ, hỏi «có khó không», «có ai hỗ trợ không», nhắc đội nhóm.\n- Muốn: an toàn, hỗ trợ từng bước. Sợ: thay đổi đột ngột, áp lực.\n\n## C — Tuân thủ\n- Hỏi «tại sao», «dựa trên đâu», đòi tài liệu và so sánh.\n- Muốn: dữ liệu chính xác, quy trình. Sợ: sai lầm, bị thúc ép.", 360, []],
+        ["Chốt sale theo từng nhóm", "noi_dung", "## D: chốt trực tiếp, đưa lựa chọn\n«Anh chọn gói A hay B? Em gửi hợp đồng hôm nay.» Nói kết luận trước, số liệu sau.\n\n## I: chốt khi đang hào hứng, xác nhận bằng văn bản\n«Vậy mình bắt đầu tuần này nhé, em giữ chỗ luôn.» Rồi nhắn tóm tắt 3 dòng ngay sau cuộc gọi.\n\n## S: chốt từng bước nhỏ, bảo đảm\n«Mình thử bước đầu 7 ngày, em hỗ trợ trực tiếp, không hợp thì hoàn tiền.» Không dùng «chỉ còn hôm nay».\n\n## C: chốt bằng tóm tắt logic\n«Dựa trên 3 điểm mình thống nhất, phương án phù hợp là… Em gửi đề xuất chi tiết, mình chốt sau khi anh đọc, thứ 5.»\n\n## Bài tập\nMở role-play, chọn nhóm khách C, luyện chốt bằng tóm tắt logic 2 phiên.", 300, []],
+        ["Kiểm tra: DISC", "quiz", "", 0, [
+          { hoi: "Khách nói: «Nói thẳng đi, bao lâu thì thấy kết quả?» — nhóm nào?", luaChon: ["I", "S", "D", "C"], dapAn: 2, giaiThich: "Câu ngắn, hỏi thẳng kết quả và thời gian: D." },
+          { hoi: "Với khách nhóm S, câu nào KHÔNG nên nói?", luaChon: ["Em hỗ trợ từng bước ạ", "Chỉ còn hôm nay là hết ưu đãi", "Mình thử 7 ngày, không hợp thì hoàn tiền", "Đội anh sẽ được hướng dẫn"], dapAn: 1, giaiThich: "S sợ áp lực và thay đổi đột ngột." },
+          { hoi: "Khách nhóm C cần gì trước khi chốt?", luaChon: ["Câu chuyện cảm động", "Tài liệu, số liệu, điều khoản", "Khuyến mãi giờ chót", "Lời khen"], dapAn: 1 },
+          { hoi: "Khách nhóm I hay đổi ý sau khi hào hứng, sale nên làm gì?", luaChon: ["Để họ tự suy nghĩ 1 tuần", "Chốt ngay khi hào hứng và xác nhận bằng tin nhắn", "Gửi bảng so sánh 10 trang", "Không gọi lại"], dapAn: 1 },
+        ]],
+      ]],
       ["Chốt và tuân thủ", [
         ["Chốt bằng bước tiếp theo có thời hạn", "noi_dung", "Mọi cuộc gọi kết thúc bằng MỘT bước tiếp theo cụ thể: ai làm gì, khi nào. «Em gửi link giữ chỗ ngay bây giờ, anh xác nhận trước 17h hôm nay nhé?» Nếu khách chưa sẵn sàng: chốt lịch gọi lại có ngày giờ.", 240, []],
         ["Những điều không bao giờ nói", "noi_dung", "- Không hứa kết quả («chắc chắn», «cam kết 100%», «đảm bảo lợi nhuận»).\n- Không bịa số liệu, không dùng số ngoài danh sách được phép.\n- Không nói xấu đối thủ.\n- Không ghi âm khi khách chưa đồng ý.\n- Xưng hô đúng, không suồng sã.", 200, []],
@@ -107,18 +118,18 @@ export async function seed(): Promise<{ workspaceId: string; daCo: boolean }> {
       }
     }
     // Tiến độ demo: sale1 hoàn thành 100% (có chứng chỉ), sale2 75%, sale3 40%, sale4 10%, sale5 chưa học
-    const tienDo = [12, 9, 5, 1, 0];
+    const tienDo = [15, 9, 5, 1, 0];
     for (let i = 0; i < sales.length; i++) {
       if (tienDo[i] === 0) continue;
       const g = (await c.query<{ id: string }>("insert into ghi_danh(workspace_id, nguoi_dung_id, khoa_hoc_id, phan_tram, hoc_cuoi_luc, hoan_thanh_luc, moc_da_phat) values ($1,$2,$3,$4, now() - ($5 || ' days')::interval, $6, $7) returning id",
-        [ws, sales[i], khoa, Math.round((tienDo[i] / 12) * 100), String(i * 2), tienDo[i] === 12 ? new Date() : null, JSON.stringify(tienDo[i] === 12 ? ["module_hoan_thanh:" + baiIds[0].module, "nguong_khoa", "hoan_thanh_khoa"] : [])])).rows[0].id;
+        [ws, sales[i], khoa, Math.round((tienDo[i] / 15) * 100), String(i * 2), tienDo[i] === 15 ? new Date() : null, JSON.stringify(tienDo[i] === 15 ? ["module_hoan_thanh:" + baiIds[0].module, "nguong_khoa", "hoan_thanh_khoa"] : [])])).rows[0].id;
       for (let b = 0; b < tienDo[i]; b++) {
         const bai = baiIds[b];
         await c.query("insert into tien_do_bai(workspace_id, ghi_danh_id, bai_hoc_id, giay_da_hoc, diem_quiz, hoan_thanh_luc) values ($1,$2,$3,$4,$5, now() - ($6 || ' days')::interval)", [ws, g, bai.id, 400, bai.loai === "quiz" ? 80 + (b % 3) * 5 : null, String(20 - b)]);
         await c.query("insert into diem_hoc(workspace_id, nguoi_dung_id, su_kien, diem, ngay, tham_chieu, luc) values ($1,$2,'hoan_thanh_bai',50, (now() - ($3 || ' days')::interval)::date, $4, now() - ($3 || ' days')::interval)", [ws, sales[i], String(20 - b), `bai:${bai.id}`]);
         if (bai.loai === "quiz") await c.query("insert into diem_hoc(workspace_id, nguoi_dung_id, su_kien, diem, ngay, tham_chieu, luc) values ($1,$2,'vuot_quiz',100, (now() - ($3 || ' days')::interval)::date, $4, now() - ($3 || ' days')::interval)", [ws, sales[i], String(20 - b), `quiz:${bai.id}`]);
       }
-      if (tienDo[i] === 12) {
+      if (tienDo[i] === 15) {
         await c.query("insert into diem_hoc(workspace_id, nguoi_dung_id, su_kien, diem, ngay, tham_chieu) values ($1,$2,'hoan_thanh_khoa',300, current_date, $3)", [ws, sales[i], `khoa:${khoa}`]);
         await c.query("insert into chung_chi(workspace_id, nguoi_dung_id, khoa_hoc_id, ma, ten_nguoi, ten_khoa) values ($1,$2,$3,$4,'Trần Minh Đức','Kỹ năng bán hàng tư vấn')", [ws, sales[i], khoa, maChungChi(ws, sales[i], khoa, new Date().getFullYear())]);
       }
@@ -201,6 +212,12 @@ Lê Thu Hương: Dạ, em gọi lại chị thứ 5 lúc 10h để chốt lịch
     }
     await c.query("update san_pham set doi_tuong = $2, ket_qua_ky_vong = $3, hinh_thuc = $4, thoi_luong = $5, chinh_sach = $6, phan_doi_thuong_gap = $7 where id = $1", [sp1, "Chủ doanh nghiệp nhỏ đã có sản phẩm bán được, muốn hệ thống hóa", "Có quy trình chăm lead tự động và báo cáo rõ sau 8 tuần (không hứa doanh thu)", "Online + coach 1-1", "8 tuần, 2 giờ/tuần", "Hoàn tiền 7 ngày; chia 3 kỳ", JSON.stringify(["Giá cao so với ngân sách", "Bận không có thời gian học", "Từng mua khóa không hiệu quả"])]);
     await c.query("update san_pham set doi_tuong = $2, ket_qua_ky_vong = $3, hinh_thuc = $4, thoi_luong = $5 where id = $1", [sp2, "Doanh nghiệp doanh thu 2–20 tỷ/năm muốn tăng trưởng có hệ thống", "Hệ thống marketing và sale vận hành được, đo bằng số liệu tuần", "Đồng hành tận nơi", "6 tháng"]);
+    for (const n of ["D", "I", "S", "C"]) await c.query("insert into kich_ban_disc(workspace_id, san_pham_id, nhom, noi_dung, trang_thai, che_do_ai) values ($1,$2,$3,$4,'da_duyet','seed')", [ws, sp1, n, JSON.stringify(KB_DISC_MAU[n])]);
+    await c.query("update cuoc_goi set disc = 'C', disc_tin_cay = 70 where ten_khach like 'Cty ABC%'");
+    await c.query("update cuoc_goi set disc = 'S', disc_tin_cay = 65 where ten_khach like 'Cty DEF%'");
+    await c.query("update cuoc_goi set disc = 'D', disc_tin_cay = 60 where ten_khach like 'Cty JKL%'");
+    await c.query("update cuoc_goi set disc = 'I', disc_tin_cay = 55 where ten_khach like 'Cty PQR%'");
+    await c.query("update phien_luyen_tap set disc = 'C'");
     await c.query("insert into nhat_ky_kiem_toan(workspace_id, nguoi_dung_id, hanh_dong, chi_tiet) values ($1,$2,'seed_demo','{}')", [ws, ql]);
     await c.query("commit");
     return { workspaceId: ws, daCo: false };

@@ -11,6 +11,7 @@ import { thuVienDoanMau } from "@/services/huan-luyen";
 import { KY_NANG, TEN_KY_NANG, nhanXetDiem } from "@/core/khung-ky-nang";
 import { TEN_LOAI_PHAN_DOI } from "@/core/phan-doi";
 import { xemDuocDiem } from "@/core/phan-quyen";
+import { DISC } from "@/core/disc";
 export const dynamic = "force-dynamic";
 export default async function TrangChiTietCuocGoi({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -53,6 +54,11 @@ export default async function TrangChiTietCuocGoi({ params }: { params: Promise<
                   <TomTat ten="Cam kết" muc={pt.tom_tat.cam_ket.map((k) => `${k.ben === "sale" ? "Sale" : "Khách"}: ${k.noi_dung}${k.han ? ` (hạn ${k.han})` : ""}`)} />
                   <div><div className="text-xs font-semibold" style={{ color: "var(--chu-mo)" }}>Bước tiếp theo</div><div>{pt.tom_tat.buoc_tiep}</div></div>
                 </div></div>
+              {pt.disc && <div className="the p-4" style={{ borderColor: DISC[pt.disc.nhom].mau }}><div className="flex items-center justify-between"><div className="font-semibold">Khách thuộc nhóm {DISC[pt.disc.nhom].ten}</div><span className="nhan nhan-xam tabular">{pt.disc.tin_cay}% tin cậy</span></div>
+                <div className="text-sm mt-1" style={{ color: "var(--chu-mo)" }}>{pt.disc.ly_do}</div>
+                {pt.disc.goi_y_lan_sau && <div className="text-sm mt-2"><b>Lần sau nên:</b> {pt.disc.goi_y_lan_sau}</div>}
+                <Link href={`/kich-ban/disc?san_pham=${c.san_pham_id ?? ""}&nhom=${pt.disc.nhom}`} className="nut nut-nho mt-2">Xem kịch bản nhóm {pt.disc.nhom}</Link>
+                <Link href={`/luyen-tap/moi?disc=${pt.disc.nhom}`} className="nut nut-nho nut-chinh mt-2 ml-1">Luyện với khách nhóm {pt.disc.nhom}</Link></div>}
               <div className="the p-4"><div className="font-semibold mb-2">Scorecard kỹ năng</div>
                 <Radar lop={[{ ten: "Cuộc gọi", diem: pt.diem, mau: "#14b8a6", dam: true }]} size={220} />
                 <table className="bang mt-2"><tbody>{KY_NANG.map((k) => { const vd = pt.vi_du_theo_ky_nang.find((v) => v.ky_nang === k); return <tr key={k}><td className="text-xs font-medium">{TEN_KY_NANG[k]}</td><td className="tabular text-right font-semibold" style={{ color: pt.diem[k] >= 80 ? "var(--xanh)" : pt.diem[k] >= 65 ? "var(--vang)" : "var(--do)" }}>{pt.diem[k]}</td><td className="text-[11px]" style={{ color: "var(--chu-mo)" }}>{vd?.vi_du}</td></tr>; })}</tbody></table></div>

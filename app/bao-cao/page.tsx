@@ -7,13 +7,15 @@ import { nguCanhTrang } from "@/services/trang";
 import { yeuCauQuanLy } from "@/services/xac-thuc";
 import { baoCaoDoi } from "@/services/bao-cao";
 import { KY_NANG, TEN_KY_NANG } from "@/core/khung-ky-nang";
+import { thongKeDisc } from "@/services/disc";
+import { DISC } from "@/core/disc";
 export const dynamic = "force-dynamic";
 export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ ngay?: string }> }) {
   await yeuCauQuanLy();
   const { phien, ws } = await nguCanhTrang();
   const { ngay: n } = await searchParams;
   const ngay = [7, 30, 90].includes(Number(n)) ? Number(n) : 30;
-  const { dong, radarDoi } = await ws((q) => baoCaoDoi(q, ngay));
+  const [{ dong, radarDoi }, tkDisc] = await ws(async (q) => Promise.all([baoCaoDoi(q, ngay), thongKeDisc(q)]));
   const tong = dong.reduce((s, d) => ({ phien: s.phien + d.phien, goi: s.goi + d.cuoc_goi, thang: s.thang + d.thang, bai: s.bai + d.bai_xong, diem: s.diem + d.diem_gamification }), { phien: 0, goi: 0, thang: 0, bai: 0, diem: 0 });
   const coDiem = dong.filter((d) => d.diem_tb_phien != null || d.diem_tb_goi != null);
   const tb = coDiem.length ? Math.round(coDiem.reduce((s, d) => s + ((d.diem_tb_phien ?? d.diem_tb_goi ?? 0) + (d.diem_tb_goi ?? d.diem_tb_phien ?? 0)) / 2, 0) / coDiem.length) : null;
@@ -31,7 +33,10 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
         <div className="the overflow-x-auto"><table className="bang"><thead><tr><th>Nhân viên</th><th>Phiên</th><th>TB phiên</th><th>Cuộc gọi</th><th>Thắng</th><th>TB gọi</th><th>Bài xong</th><th>Quiz TB</th><th>Điểm</th>{KY_NANG.map((k) => <th key={k} className="text-center">{TEN_KY_NANG[k].split(" ")[0]}</th>)}</tr></thead>
           <tbody>{dong.map((d) => <tr key={d.nguoi_dung_id}><td><Link href={`/huan-luyen/${d.nguoi_dung_id}`} className="font-medium hover:underline">{d.ten}</Link></td><td className="tabular">{d.phien}</td><td><NhanDiem diem={d.diem_tb_phien} nhoGon /></td><td className="tabular">{d.cuoc_goi}</td><td className="tabular">{d.cuoc_goi ? `${Math.round((d.thang / d.cuoc_goi) * 100)}%` : "—"}</td><td><NhanDiem diem={d.diem_tb_goi} nhoGon /></td><td className="tabular">{d.bai_xong}</td><td className="tabular">{d.quiz_tb != null ? `${d.quiz_tb}%` : "—"}</td><td className="tabular">{d.diem_gamification.toLocaleString("vi-VN")}</td>
             {KY_NANG.map((k) => <td key={k} className="text-center tabular" style={{ color: d.radar ? (d.radar[k] >= 80 ? "var(--xanh)" : d.radar[k] >= 65 ? "var(--vang)" : "var(--do)") : "var(--chu-nhat)" }}>{d.radar?.[k] ?? "—"}</td>)}</tr>)}</tbody></table></div>
-        <div className="the p-4"><div className="font-semibold mb-2">Radar đội trong kỳ</div>{radarDoi ? <Radar lop={[{ ten: "Đội", diem: radarDoi, mau: "#2563eb", dam: true }]} size={250} /> : <div className="mo-ta py-8 text-center">Chưa có bản chấm trong kỳ.</div>}</div>
+        <div className="flex flex-col gap-4"><div className="the p-4"><div className="font-semibold mb-2">Theo nhóm khách DISC (toàn kỳ)</div>
+          <table className="bang"><thead><tr><th>Nhóm</th><th>Cuộc gọi</th><th>Thắng</th><th>Điểm TB</th><th>Role-play</th></tr></thead><tbody>{tkDisc.map((t) => <tr key={t.nhom}><td><span className="nhan" style={{ background: DISC[t.nhom].mau + "22", color: DISC[t.nhom].mau }}>{DISC[t.nhom].ten}</span></td><td className="tabular">{t.so_goi}</td><td className="tabular">{t.so_goi ? `${Math.round((t.thang / t.so_goi) * 100)}%` : "—"}</td><td className="tabular">{t.diem_tb ?? "—"}</td><td className="tabular">{t.so_phien}{t.diem_phien != null ? ` · ${t.diem_phien}` : ""}</td></tr>)}</tbody></table>
+          <div className="text-[11px] mt-2" style={{ color: "var(--chu-mo)" }}>Nhóm thắng thấp → giao bài tập role-play đúng nhóm đó.</div></div>
+        <div className="the p-4"><div className="font-semibold mb-2">Radar đội trong kỳ</div>{radarDoi ? <Radar lop={[{ ten: "Đội", diem: radarDoi, mau: "#2563eb", dam: true }]} size={250} /> : <div className="mo-ta py-8 text-center">Chưa có bản chấm trong kỳ.</div>}</div></div>
       </div>
     </KhungShell>
   );

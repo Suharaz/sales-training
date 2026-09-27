@@ -38,6 +38,7 @@ Tài liệu gốc là spec TAKI FUNNEL OS v2 (module M15 Sales Engine, M18 LMS) 
 | **DNA doanh nghiệp** | Hồ sơ doanh nghiệp có phiên bản: mô tả, khách mục tiêu, nỗi đau, USP, xưng hô, phong cách, **từ cấm**, **số liệu được phép**, đối thủ, chính sách. Nhập tay hoặc **dán tài liệu để AI trích**. AI Gateway tự nạp vào mọi tác vụ, đầu ra có từ cấm bị đánh dấu trong nhật ký. |
 | **Sản phẩm** | Hồ sơ đầy đủ theo bậc thang giá trị (tầng 0–4): đối tượng, kết quả kỳ vọng, hình thức, thời lượng, điểm bán hàng, phản đối thường gặp, chính sách, so sánh đối thủ, tài liệu. Dùng chung cho role-play, phân tích, gợi ý và copilot. |
 | **Copilot cuộc gọi thật** | Trình duyệt nghe cuộc gọi (loa ngoài) và chuyển thành lời thoại theo người nói (phím cách để đổi, bấm câu để sửa vai). **Lớp tức thì**: bắt phản đối bằng từ khóa → câu trả lời chuẩn, cảnh báo tuân thủ bằng luật. **Lớp AI** tự chạy sau mỗi câu khách nói: câu nên nói ngay, 2–3 câu hỏi nên hỏi, xử lý phản đối, tín hiệu và độ sẵn sàng chốt, bước tiếp. Đọc gợi ý vào tai nghe. Kết thúc là phân tích đầy đủ. |
+| **Kịch bản chốt sale theo DISC** | Mỗi sản phẩm × 4 nhóm khách (D thống trị, I ảnh hưởng, S ổn định, C tuân thủ) có kịch bản 8 phần: mở đầu, câu hỏi khai thác, trình bày giá trị, 3 phản đối điển hình, chốt, theo dõi, từ nên dùng, từ nên tránh. **AI sinh trọn bộ** từ DNA và hồ sơ sản phẩm, quản lý sửa và duyệt, có bản in 4 nhóm một trang. Role-play cho chọn nhóm khách và chấm «nói đúng kiểu khách»; phân tích cuộc gọi nhận diện nhóm và gợi ý lần sau; copilot đoán nhóm ngay trong cuộc gọi và đổi gợi ý theo kịch bản nhóm; báo cáo tỷ lệ thắng theo nhóm; khóa nền có module DISC. |
 | **Luyện tập role-play** | AI dựng persona theo sản phẩm và độ khó (dễ / vừa / khó), chọn phản đối muốn luyện; chat từng lượt; **khách nói thành tiếng bằng giọng Việt tự nhiên (chọn giọng, tốc độ), mic nói thay gõ**; copilot bên phải hiện kịch bản và câu trả lời chuẩn khi khách phản đối; kết thúc → radar 6 tiêu chí, nhận xét, câu nói tốt hơn theo từng lượt. |
 | **Phân tích cuộc gọi** | **Ghi âm trực tiếp** bằng Web Speech API (transcript theo người nói, không lưu audio) hoặc dán transcript; AI tóm tắt nhu cầu / phản đối / cam kết / bước tiếp; scorecard kỹ năng kèm trích dẫn; phản đối mới vào **hàng chờ duyệt**; đoạn xử lý hay vào **thư viện mẫu**; cam kết thành **nhiệm vụ có hạn**; cảnh báo tuân thủ (hứa kết quả, bịa số liệu, nói xấu đối thủ). |
 | **Huấn luyện AI** | Ma trận kỹ năng đội; radar cá nhân vs đội vs top 20%; insight (phản đối thua phổ biến, tiêu chí yếu nhất); **gói huấn luyện cá nhân** (điểm yếu, bài học đề xuất, bài tập role-play, lời khuyên); **phân công coaching**: quản lý giao bài tập role-play hoặc việc có hạn. |
@@ -59,7 +60,7 @@ Mọi lời gọi Claude đi qua **một AI Gateway duy nhất** ([`services/ai-
 
 Đầu ra luôn được ép về JSON theo lược đồ **zod** ([`core/ai-kieu.ts`](core/ai-kieu.ts)), sai thì tự sửa một vòng rồi mới rơi xuống dự phòng. 100% lời gọi ghi `log_sinh_ai` (tác vụ, chế độ, model, token, thời gian, lỗi). Nội dung AI sinh ra (phản đối mới, đoạn mẫu) luôn ở trạng thái **nháp** cho tới khi quản lý duyệt.
 
-Tám tác vụ: `sinh_persona` · `khach_tra_loi` · `cham_luyen_tap` · `phan_tich_cuoc_goi` · `goi_huan_luyen` · `goi_y_tra_loi` · `trich_dna` · `copilot`. Mọi tác vụ tự nhận **tóm tắt DNA** (phiên bản được ghi vào log); `copilot` dùng model nhanh (`AI_MODEL_NHANH`) và cửa sổ 14 lượt gần nhất. Ở chế độ `cli`, gateway gọi Claude Code với system prompt riêng và tắt toàn bộ tool/MCP nên một gợi ý copilot mất khoảng 8 giây. Script [`scripts/thu-ai.ts`](scripts/thu-ai.ts) chạy trọn luồng với Claude thật (`pnpm thu:ai`).
+Chín tác vụ: `sinh_persona` · `khach_tra_loi` · `cham_luyen_tap` · `phan_tich_cuoc_goi` · `goi_huan_luyen` · `goi_y_tra_loi` · `trich_dna` · `copilot` · `sinh_kich_ban_disc`. Mọi tác vụ tự nhận **tóm tắt DNA** (phiên bản được ghi vào log); `copilot` dùng model nhanh (`AI_MODEL_NHANH`) và cửa sổ 14 lượt gần nhất. Ở chế độ `cli`, gateway gọi Claude Code với system prompt riêng và tắt toàn bộ tool/MCP nên một gợi ý copilot mất khoảng 8 giây. Script [`scripts/thu-ai.ts`](scripts/thu-ai.ts) chạy trọn luồng với Claude thật (`pnpm thu:ai`).
 
 **Giọng nói.** Nhận dạng và đọc bằng Web Speech API của trình duyệt (không cần dịch vụ ngoài). Bộ chọn giọng tự xếp hạng giọng tiếng Việt tự nhiên nhất có sẵn: Microsoft Edge (HoaiMy / NamMinh Natural) tốt nhất, rồi Google Tiếng Việt trên Chrome, rồi Linh trên macOS; người dùng chọn giọng và tốc độ, câu được tách để ngắt nghỉ tự nhiên.
 
@@ -68,8 +69,8 @@ Tám tác vụ: `sinh_persona` · `khach_tra_loi` · `cham_luyen_tap` · `phan_t
 ```
 app/            Next.js 15 App Router (route tiếng Việt), server actions cho form, route handler cho chat/API
 components/     KhungShell (sidebar + header), Radar, TheKpi, ManHinhLuyenTap, CuocGoiTrucTiep (copilot), FormDna, ManHinhBaiHoc…
-services/       Nghiệp vụ: workspace-guard · ai-gateway · dna · copilot · xac-thuc · luyen-tap · cuoc-goi · huan-luyen · dao-tao · diem · kich-ban · nhan-vien · bao-cao · workspace
-core/           Logic thuần, không phụ thuộc DB: khung kỹ năng, dna, giong-noi, gamification, tiến độ, chứng chỉ, dự phòng AI, csv, mật khẩu, phân quyền (+ core.test.ts)
+services/       Nghiệp vụ: workspace-guard · ai-gateway · dna · disc · copilot · xac-thuc · luyen-tap · cuoc-goi · huan-luyen · dao-tao · diem · kich-ban · nhan-vien · bao-cao · workspace
+core/           Logic thuần, không phụ thuộc DB: khung kỹ năng, dna, disc, giong-noi, gamification, tiến độ, chứng chỉ, dự phòng AI, csv, mật khẩu, phân quyền (+ core.test.ts)
 db/             migrations/*.sql · khoi-tao.ts · seed.ts · db.test.ts
 deploy/         len-cloudflare.sh (tunnel) · dung.sh · vercel.md (bẫy Neon)
 tai-lieu/       spec gốc, 72 mockup, phương án, ảnh màn hình
@@ -140,6 +141,13 @@ Biến môi trường (`.env.example`):
 </details>
 
 <details open>
+<summary><b>Kịch bản chốt sale theo DISC</b></summary>
+
+![Kịch bản DISC](tai-lieu/anh-man-hinh/24-kich-ban-disc.png)
+![Bản in 4 nhóm](tai-lieu/anh-man-hinh/25-disc-ban-in.png)
+</details>
+
+<details open>
 <summary><b>Luyện tập role-play với AI</b></summary>
 
 ![Tạo phiên](tai-lieu/anh-man-hinh/03-tao-role-play.png)
@@ -197,7 +205,7 @@ Biến môi trường (`.env.example`):
 
 ## Kiểm thử
 
-- `core/core.test.ts`: chuẩn hóa điểm, hạng và chuỗi ngày, mốc tiến độ idempotent, chấm quiz, mã chứng chỉ, bóc JSON, mật khẩu, phân quyền, chấm theo luật, khách mẫu, tách transcript, CSV, rủi ro rớt học, DNA (độ đầy đủ, tóm tắt, từ cấm).
+- `core/core.test.ts`: chuẩn hóa điểm, hạng và chuỗi ngày, mốc tiến độ idempotent, chấm quiz, mã chứng chỉ, bóc JSON, mật khẩu, phân quyền, chấm theo luật, khách mẫu, tách transcript, CSV, rủi ro rớt học, DNA (độ đầy đủ, tóm tắt, từ cấm), nhận diện DISC.
 - `db/db.test.ts`: cách ly workspace bằng RLS (đọc, ghi chéo, không ngữ cảnh), bảng bất biến, tra cứu nền tảng, tiến độ và chứng chỉ, ghi danh idempotent, role-play và phân tích cuộc gọi ở chế độ dự phòng, nhiệm vụ hủy bắt buộc lý do.
 - Smoke test toàn bộ route với hai vai trò trước mỗi lần lên production.
 

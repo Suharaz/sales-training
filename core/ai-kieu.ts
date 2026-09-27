@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { KY_NANG } from "./khung-ky-nang";
 import { LOAI_PHAN_DOI } from "./phan-doi";
+import { discSchema } from "./disc";
 
 const diemKhungSchema = z.object(Object.fromEntries(KY_NANG.map((k) => [k, z.number().min(0).max(100)])) as Record<(typeof KY_NANG)[number], z.ZodNumber>);
 const loaiPhanDoi = z.enum(LOAI_PHAN_DOI);
@@ -20,6 +21,7 @@ export const personaSchema = z.object({
   ngan_sach: z.string(),
   tinh_cach: z.string(),
   phan_doi_chinh: z.array(loaiPhanDoi).min(1).max(4),
+  disc: discSchema.optional(),
 });
 export type Persona = z.infer<typeof personaSchema>;
 
@@ -39,6 +41,7 @@ export const ketQuaLuyenTapSchema = z.object({
   can_cai_thien: z.array(z.string()),
   goi_y_theo_luot: z.array(z.object({ luot: z.number(), van_de: z.string(), cau_tot_hon: z.string() })),
   phan_doi_da_gap: z.array(z.object({ loai: loaiPhanDoi, xu_ly_tot: z.boolean(), ghi_chu: z.string() })),
+  phu_hop_disc: z.object({ diem: z.number().min(0).max(100), nhan_xet: z.string() }).optional(),
 });
 export type KetQuaLuyenTap = z.infer<typeof ketQuaLuyenTapSchema>;
 
@@ -57,6 +60,7 @@ export const phanTichCuocGoiSchema = z.object({
   so_cau_hoi_sale: z.number().min(0),
   cam_xuc_khach: z.number().min(-1).max(1),
   rui_ro_tuan_thu: z.array(z.string()),
+  disc: z.object({ nhom: discSchema, tin_cay: z.number().min(0).max(100), ly_do: z.string(), goi_y_lan_sau: z.string() }).nullable().optional(),
 });
 export type PhanTichCuocGoi = z.infer<typeof phanTichCuocGoiSchema>;
 
@@ -85,5 +89,6 @@ export const copilotSchema = z.object({
   tin_hieu: z.enum(["tich_cuc", "trung_tinh", "tieu_cuc"]),
   san_sang_chot: z.number().min(0).max(100),
   buoc_tiep: z.string(),                      // bước chốt/đề xuất phù hợp lúc này
+  disc_doan: z.object({ nhom: discSchema, tin_cay: z.number().min(0).max(100), chinh_cach_noi: z.string() }).nullable().optional(),
 });
 export type GoiYCopilot = z.infer<typeof copilotSchema>;

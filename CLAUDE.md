@@ -27,6 +27,12 @@ Giao diện SÁNG mặc định (nút đổi tối trên header, lưu localStora
 - **Giọng nói** (`core/giong-noi.ts`): chọn giọng tiếng Việt tự nhiên nhất có sẵn (Edge Natural > Google > macOS Linh), người dùng chọn giọng/tốc độ, tách câu để ngắt tự nhiên. Không có dịch vụ TTS ngoài (không key) — Edge cho giọng tốt nhất.
 - Dữ liệu demo trong repo là **trung tính** («Công ty Demo», quanly@demo.vn / Demo@2026, sale1..5@demo.vn / Sale@2026). Không có dữ liệu thật của khách hàng nào trong git.
 
+## Đợt 4 — Kịch bản chốt sale theo DISC (27/09/2026)
+- `core/disc.ts`: hồ sơ 4 nhóm D/I/S/C (dấu hiệu, muốn/sợ, nên/tránh, bằng chứng, kiểu chốt, phản đối điển hình), `doanDisc()` theo từ khóa, lược đồ `kichBanDiscSchema` 8 phần.
+- Bảng `kich_ban_disc` (sản phẩm × nhóm, nháp → duyệt); trang `/kich-ban/disc` (AI sinh từng nhóm hoặc trọn bộ, sửa, duyệt), bản in `/kich-ban/disc/in`.
+- Tích hợp: role-play chọn nhóm khách (hoặc ngẫu nhiên) → persona diễn đúng nhóm, chấm thêm `phu_hop_disc`; phân tích cuộc gọi trả `disc` (nhóm, tin cậy, lý do, gợi ý lần sau) lưu cột `cuoc_goi.disc`; copilot đoán nhóm (lớp luật + AI) và nạp kịch bản nhóm đã duyệt vào gợi ý; báo cáo thắng theo nhóm; khóa nền có module DISC + quiz.
+- Tác vụ AI mới: `sinh_kich_ban_disc` (~10–20 giây/nhóm qua CLI).
+
 ## Lệnh
 `pnpm dev` (3020) · `pnpm build` · `pnpm test` (21 core) · `pnpm test:db` (8, cần DB local) · `pnpm typecheck` · `pnpm db:init` · `pnpm db:seed` · `pnpm thu:ai` (chạy trọn luồng với Claude thật) · `./deploy/len-cloudflare.sh` (tunnel) · `./deploy/dung.sh`.
 

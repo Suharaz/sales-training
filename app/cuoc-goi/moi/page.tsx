@@ -7,6 +7,7 @@ import { danhSachNhanVien } from "@/services/nhan-vien";
 import { napVaPhanTich, type CuocGoi } from "@/services/cuoc-goi";
 import { cheDoAI } from "@/services/ai-gateway";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 const MAU = `Trần Minh Đức: Dạ chào anh A, em là Đức bên Công ty Demo. Anh vừa tham gia webinar tối qua đúng không ạ? Anh thấy phần nào hữu ích nhất?
 Nguyễn Văn A: Phần chuỗi email tự động. Bên anh đang mất nhiều lead lắm.
 Trần Minh Đức: Dạ em hiểu, tức là lead vào nhưng không ai chăm kịp đúng không ạ? Hiện đội anh có mấy người?

@@ -33,7 +33,7 @@ export default async function TrangKichBan({ searchParams }: { searchParams: Pro
   const pdCho = pd.filter((p) => p.trang_thai === "nhap"), pdDuyet = pd.filter((p) => p.trang_thai === "da_duyet");
   return (
     <KhungShell phien={phien} duongDan="/kich-ban" tieuDe="Kịch bản & Kho phản đối" moTa="Kịch bản gọi 4 phần theo sản phẩm và câu trả lời chuẩn cho từng loại phản đối (F-114, F-038).">
-      <div className="flex gap-1 mb-4">{[["kich-ban", `Kịch bản (${kb.length})`], ["phan-doi", `Kho phản đối (${pdDuyet.length})${pdCho.length ? ` · ${pdCho.length} chờ duyệt` : ""}`]].map(([t, n]) => <a key={t} href={`/kich-ban?tab=${t}`} className={`nut ${tab === t ? "nut-chinh" : ""}`}>{n}</a>)}<a href="/san-pham" className="nut">Sản phẩm ({sp.length}) →</a></div>
+      <div className="flex gap-1 mb-4">{[["kich-ban", `Kịch bản (${kb.length})`], ["phan-doi", `Kho phản đối (${pdDuyet.length})${pdCho.length ? ` · ${pdCho.length} chờ duyệt` : ""}`]].map(([t, n]) => <a key={t} href={`/kich-ban?tab=${t}`} className={`nut ${tab === t ? "nut-chinh" : ""}`}>{n}</a>)}<a href="/kich-ban/disc" className="nut">Kịch bản theo DISC →</a><a href="/san-pham" className="nut">Sản phẩm ({sp.length}) →</a></div>
       {loi && <div className="text-sm px-3 py-2 rounded-lg mb-3" style={{ background: "var(--do-mo)", color: "var(--chu-do)" }}>{loi}</div>}
       {tab === "kich-ban" && (
         <div className="grid gap-4 lg:grid-cols-[1fr_400px]">

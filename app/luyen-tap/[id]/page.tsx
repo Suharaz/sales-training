@@ -19,7 +19,7 @@ export default async function TrangPhien({ params }: { params: Promise<{ id: str
   const cuaToi = p.nguoi_dung_id === phien.nguoiDungId;
   return (
     <KhungShell phien={phien} duongDan="/luyen-tap" tieuDe={`Cuộc gọi — ${p.persona.ten}`} moTa={`${p.persona.chuc_danh} · ${p.persona.cong_ty} · ${TEN_DO_KHO[p.do_kho].split(" — ")[0]}${p.ten_san_pham ? ` · ${p.ten_san_pham}` : ""}`}
-      hanhDong={<Link href="/luyen-tap" className="nut">← Danh sách</Link>}>
+      hanhDong={<>{p.disc && p.trang_thai !== "dang" && <span className="nut nut-nho" style={{ pointerEvents: "none" }}>Khách nhóm {p.disc}</span>}<Link href="/luyen-tap" className="nut">← Danh sách</Link></>}>
       {p.trang_thai === "xong" && p.ket_qua ? (
         <KetQuaLuyenTapView phien={p} />
       ) : p.trang_thai === "huy" ? <div className="the p-8 text-center mo-ta">Phiên đã hủy.</div> : (
